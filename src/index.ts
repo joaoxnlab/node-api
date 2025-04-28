@@ -4,19 +4,31 @@ import fs from 'fs'
 const app = express();
 const PORT = 8800;
 const DB_PATH = './db.json';
+const DB_COUNTERS_PATH = './db-counters.json';
 const FILE_ENCODING = 'utf8';
 
-function read(file: fs.PathOrFileDescriptor = DB_PATH) {
+type Database = {
+    students: [],
+    teachers: []
+}
+
+type DatabaseCounters = {
+    students: number,
+    teachers: number
+}
+
+function read<T>(file: fs.PathOrFileDescriptor,
+              parser: (data: string) => T): Promise<T> {
     return new Promise((resolve, reject) => {
         fs.readFile(DB_PATH, FILE_ENCODING, (err, data) => {
             if (err) reject(err);
-            const object = JSON.parse(data);
-            resolve(object);
+            const parsed = parser(data);
+            resolve(parsed);
         });
     });
 }
 
-function write(data: string | NodeJS.ArrayBufferView) {
+function write(file: fs.PathOrFileDescriptor, data: string | NodeJS.ArrayBufferView): Promise<null> {
     return new Promise((resolve, reject) => {
         fs.writeFile(DB_PATH, data, FILE_ENCODING, (err) => {
             if (err) reject(err);
@@ -25,11 +37,37 @@ function write(data: string | NodeJS.ArrayBufferView) {
     });
 }
 
-// function getCurrentID() {
-//     read()
-// }
+async function currentID(key: keyof DatabaseCounters) {
+    const counters = await read(DB_COUNTERS_PATH, JSON.parse) as DatabaseCounters;
+    return counters[key];
+}
 
-app.get('/', (req, res) => {})
+async function stepID(key: keyof DatabaseCounters) {
+    const id = await currentID(key);
+    const response = await write(DB_COUNTERS_PATH, (id+1).toString());
+    return id+1;
+}
+
+app.get('/students', (req, res) => {
+    const data = read<Database>(DB_PATH, JSON.parse)
+        .then(value => res.status(200).json(value.students))
+        .catch(e => res.status(400).json(e));
+})
+
+app.get('/students/:id',  (req, res) => {
+    const id = req.params.id;
+    const data = read<Database>(DB_PATH, JSON.parse)
+        .then(value => {
+
+            res.status(200).json()
+        })
+        .catch(e => res.status(400).json(e));
+})
+
+app.post('/students', (req, res) => {
+    const data = req.body;
+
+})
 
 app.listen(PORT, () => {
     console.log(`Listening on port ${PORT}`);
