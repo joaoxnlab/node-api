@@ -7,6 +7,20 @@ const DB_PATH = './db.json';
 const DB_COUNTERS_PATH = './db-counter.json';
 const FILE_ENCODING = 'utf8';
 
+app.use(express.json());
+
+type Database = {
+    student: Student[],
+    teacher: Teacher[],
+    lesson: Lesson[]
+}
+
+type DatabaseCounters<T = number> = {
+    student: T,
+    teacher: T,
+    lesson: T
+}
+
 abstract class Entity  {
     id?: number;
 
@@ -22,7 +36,7 @@ abstract class Entity  {
     }
     
     async saveToDB() {
-        if (!this.id) throw new Error("ID is required to save the Entity to the Database");
+        if (this.id !== 0 && !this.id) throw new Error("ID is required to save the Entity to the Database");
         const db = await read(DB_PATH, JSON.parse) as Database;
         (db[this.dbKey] as unknown  as typeof this[]).push(this);
 
@@ -101,19 +115,6 @@ class Lesson extends Entity {
     }
 }
 
-
-type Database = {
-    student: Student[],
-    teacher: Teacher[],
-    lesson: Lesson[]
-}
-
-type DatabaseCounters<T = number> = {
-    student: T,
-    teacher: T,
-    lesson: T
-}
-
 function read<T>(file: fs.PathOrFileDescriptor,
               parser: (data: string) => T): Promise<T> {
     return new Promise((resolve, reject) => {
@@ -140,15 +141,18 @@ async function currentID(key: keyof DatabaseCounters) {
 }
 
 async function stepID(key: keyof DatabaseCounters) {
-    const id = await currentID(key);
-    const response = await write(DB_COUNTERS_PATH, (id+1).toString());
-    return id+1;
+    const counters = await read(DB_COUNTERS_PATH, JSON.parse) as DatabaseCounters;
+    const id = counters[key];
+    counters[key]++;
+
+    await write(DB_COUNTERS_PATH, JSON.stringify(counters));
+    return id;
 }
 
 app.get('/students', (req, res) => {
     console.log(`GET /students -> Initializing request`)
 
-    const data = read<Database>(DB_PATH, JSON.parse)
+    read<Database>(DB_PATH, JSON.parse)
         .then(value => res.status(200).json(value.student))
         .catch(e => res.status(400).json(e));
 })
@@ -159,7 +163,7 @@ app.get('/students/:id',  (req, res) => {
     const id = Number(req.params.id);
     if (isNaN(id)) res.status(404).send('Invalid ID');
 
-    const data = read<Database>(DB_PATH, JSON.parse)
+    read<Database>(DB_PATH, JSON.parse)
         .then(value => {
             const body = value.student[id];
             if (!body) res.status(404).send('No entity found with specified ID');
@@ -173,12 +177,14 @@ app.post('/students', async (req, res) => {
     console.log(`POST /students -> Initializing request`)
     
     const data = req.body;
+    if (!data || !("name" in data)) {
+        res.status(400).send("Invalid body format");
+    }
 
     try {
         const student = await Student.fromObjectAsync(data);
         await student.saveToDB();
-    
-        console.log(student);
+
         res.status(201).json(student);
     } catch (e) {
         console.error("POST /students -> Unknown error thrown: "+ e)
