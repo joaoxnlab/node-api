@@ -4,17 +4,114 @@ import fs from 'fs'
 const app = express();
 const PORT = 8800;
 const DB_PATH = './db.json';
-const DB_COUNTERS_PATH = './db-counters.json';
+const DB_COUNTERS_PATH = './db-counter.json';
 const FILE_ENCODING = 'utf8';
 
-type Database = {
-    students: [],
-    teachers: []
+abstract class Entity {
+    id?: number;
+
+    abstract get dbKey(): keyof DatabaseCounters;
+
+    protected constructor(id?: number) {
+        this.id = id;
+    }
+
+    async generateID() {
+        this.id = await stepID(this.dbKey);
+        return this;
+    }
+    
+    async saveToDB() {
+        if (!this.id) throw new Error("ID is required to save the Entity to the Database");
+        const db = await read(DB_PATH, JSON.parse) as Database;
+        (db[this.dbKey] as unknown  as typeof this[]).push(this);
+
+        await write(DB_PATH, JSON.stringify(db));
+    }
+
+    static fromObjectAsync(object: Record<string, any>) {
+        throw new Error("Method not implemented! Use derived class")
+    }
+
+    static fromObject(id: number, obj: { [key: string]: unknown }) {
+        throw new Error("Method not implemented! Use derived class");
+    }
 }
 
-type DatabaseCounters = {
-    students: number,
-    teachers: number
+class Student extends Entity {
+    name: string;
+
+    constructor(name: string, id?: number) {
+        super(id);
+        this.name = name;
+    }
+
+    get dbKey(): keyof DatabaseCounters {
+        return "student";
+    }
+
+    static async fromObjectAsync(obj: { name: string }) {
+        return new Student(obj.name).generateID();
+    }
+
+    static fromObject(id: number, obj: { name: string }) {
+        return new Student(obj.name, id);
+    }
+}
+
+class Teacher extends Entity {
+    name: string;
+
+    constructor(name: string, id?: number) {
+        super(id);
+        this.name = name;
+    }
+
+    get dbKey(): keyof DatabaseCounters {
+        return "teacher";
+    }
+
+    static async fromObjectAsync(obj: { name: string }) {
+        return new Teacher(obj.name).generateID();
+    }
+    
+    static fromObject(id: number, obj: { name: string }) {
+        return new Teacher(obj.name, id);
+    }
+}
+
+class Lesson extends Entity {
+    name: string;
+
+    constructor(name: string, id?: number) {
+        super(id);
+        this.name = name;
+    }
+
+    get dbKey(): keyof DatabaseCounters {
+        return "lesson";
+    }
+
+    static async fromObjectAsync(obj: { name: string }) {
+        return new Lesson(obj.name).generateID();
+    }
+
+    static fromObject(id: number, obj: { name: string }) {
+        return new Lesson(obj.name, id);
+    }
+}
+
+
+type Database = {
+    student: Student[],
+    teacher: Teacher[],
+    lesson: Lesson[]
+}
+
+type DatabaseCounters<T = number> = {
+    student: T,
+    teacher: T,
+    lesson: T
 }
 
 function read<T>(file: fs.PathOrFileDescriptor,
@@ -50,7 +147,7 @@ async function stepID(key: keyof DatabaseCounters) {
 
 app.get('/students', (req, res) => {
     const data = read<Database>(DB_PATH, JSON.parse)
-        .then(value => res.status(200).json(value.students))
+        .then(value => res.status(200).json(value.student))
         .catch(e => res.status(400).json(e));
 })
 
@@ -60,7 +157,7 @@ app.get('/students/:id',  (req, res) => {
 
     const data = read<Database>(DB_PATH, JSON.parse)
         .then(value => {
-            const body = value.students[id];
+            const body = value.student[id];
             if (!body) res.status(404).send('No entity found with specified ID');
 
             res.status(200).json(body);
@@ -68,9 +165,11 @@ app.get('/students/:id',  (req, res) => {
         .catch(e => res.status(400).json(e));
 })
 
-app.post('/students', (req, res) => {
+app.post('/students', async (req, res) => {
     const data = req.body;
 
+    const student = await Student.fromObjectAsync(data);
+    
 })
 
 app.listen(PORT, () => {
