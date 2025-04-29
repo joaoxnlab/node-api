@@ -55,11 +55,15 @@ app.get('/students', (req, res) => {
 })
 
 app.get('/students/:id',  (req, res) => {
-    const id = req.params.id;
+    const id = Number(req.params.id);
+    if (isNaN(id)) res.status(404).send('Invalid ID');
+
     const data = read<Database>(DB_PATH, JSON.parse)
         .then(value => {
+            const body = value.students[id];
+            if (!body) res.status(404).send('No entity found with specified ID');
 
-            res.status(200).json()
+            res.status(200).json(body);
         })
         .catch(e => res.status(400).json(e));
 })
