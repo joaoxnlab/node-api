@@ -7,7 +7,7 @@ const DB_PATH = './db.json';
 const DB_COUNTERS_PATH = './db-counter.json';
 const FILE_ENCODING = 'utf8';
 
-abstract class Entity {
+abstract class Entity  {
     id?: number;
 
     abstract get dbKey(): keyof DatabaseCounters;
@@ -117,7 +117,7 @@ type DatabaseCounters<T = number> = {
 function read<T>(file: fs.PathOrFileDescriptor,
               parser: (data: string) => T): Promise<T> {
     return new Promise((resolve, reject) => {
-        fs.readFile(DB_PATH, FILE_ENCODING, (err, data) => {
+        fs.readFile(file, FILE_ENCODING, (err, data) => {
             if (err) reject(err);
             const parsed = parser(data);
             resolve(parsed);
@@ -127,7 +127,7 @@ function read<T>(file: fs.PathOrFileDescriptor,
 
 function write(file: fs.PathOrFileDescriptor, data: string | NodeJS.ArrayBufferView): Promise<null> {
     return new Promise((resolve, reject) => {
-        fs.writeFile(DB_PATH, data, FILE_ENCODING, (err) => {
+        fs.writeFile(file, data, FILE_ENCODING, (err) => {
             if (err) reject(err);
             resolve(null);
         });
@@ -146,12 +146,16 @@ async function stepID(key: keyof DatabaseCounters) {
 }
 
 app.get('/students', (req, res) => {
+    console.log(`GET /students -> Initializing request`)
+
     const data = read<Database>(DB_PATH, JSON.parse)
         .then(value => res.status(200).json(value.student))
         .catch(e => res.status(400).json(e));
 })
 
 app.get('/students/:id',  (req, res) => {
+    console.log(`GET /students/${req.params.id} -> Initializing request`)
+    
     const id = Number(req.params.id);
     if (isNaN(id)) res.status(404).send('Invalid ID');
 
@@ -166,10 +170,20 @@ app.get('/students/:id',  (req, res) => {
 })
 
 app.post('/students', async (req, res) => {
+    console.log(`POST /students -> Initializing request`)
+    
     const data = req.body;
 
-    const student = await Student.fromObjectAsync(data);
+    try {
+        const student = await Student.fromObjectAsync(data);
+        await student.saveToDB();
     
+        console.log(student);
+        res.status(201).json(student);
+    } catch (e) {
+        console.error("POST /students -> Unknown error thrown: "+ e)
+        throw e;
+    }
 })
 
 app.listen(PORT, () => {
