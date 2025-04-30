@@ -21,7 +21,22 @@ type DatabaseCounters<T = number> = {
     lesson: T
 }
 
-abstract class Entity  {
+async function removeFromDB(id: number, dbKey: keyof Database) {
+    if (id !== 0 && !id) throw new Error("ID is required to save the Entity to the Database");
+    const db = await read(DB_PATH, JSON.parse) as Database;
+
+    const list = db[dbKey] as Entity[];
+    const index = list.findIndex(value=> value.id === id);
+    if (index === -1) throw new Error("No entity found with specified ID");
+
+    const deletedEntity = list[index];
+    list.splice(index, 1);
+    await write(DB_PATH, JSON.stringify(db));
+
+    return deletedEntity;
+}
+
+abstract class Entity {
     id?: number;
 
     abstract get dbKey(): keyof DatabaseCounters;
@@ -43,11 +58,16 @@ abstract class Entity  {
         await write(DB_PATH, JSON.stringify(db));
     }
 
-    static fromObjectAsync(object: Record<string, any>) {
+    async removeFromDB() {
+        if (this.id !== 0 && !this.id) throw new Error("ID is required to remove the Entity from the Database");
+        return removeFromDB(this.id, this.dbKey);
+    }
+
+    static fromObjectAsync(object: Record<string, unknown>) {
         throw new Error("Method not implemented! Use derived class")
     }
 
-    static fromObject(id: number, obj: { [key: string]: unknown }) {
+    static fromObject(id: number, obj: Record<string, unknown>) {
         throw new Error("Method not implemented! Use derived class");
     }
 }
@@ -165,8 +185,9 @@ app.get('/students/:id',  (req, res) => {
 
     read<Database>(DB_PATH, JSON.parse)
         .then(value => {
-            const body = value.student[id];
-            if (!body) res.status(404).send('No entity found with specified ID');
+            const index = value.student.findIndex(value => value.id === id);
+            if (index === -1) res.status(404).send('No entity found with specified ID');
+            const body = value.student[index];
 
             res.status(200).json(body);
         })
@@ -190,6 +211,26 @@ app.post('/students', async (req, res) => {
         console.error("POST /students -> Unknown error thrown: "+ e)
         throw e;
     }
+})
+
+app.put('/students/:id', async (req, res) => {
+    console.log(`PUT /students/${req.params.id} -> Initializing request`)
+
+    const id = Number(req.params.id);
+    if (isNaN(id)) res.status(404).send('Invalid ID');
+
+
+})
+
+app.delete('/students/:id', async (req, res) => {
+    console.log(`DELETE /students/${req.params.id} -> Initializing request`)
+
+    const id = Number(req.params.id);
+    if (isNaN(id)) res.status(404).send('Invalid ID');
+
+    removeFromDB(id, 'student')
+        .then(value => res.status(200).json(value))
+        .catch(e => res.status(400).send(e.message));
 })
 
 app.listen(PORT, () => {
