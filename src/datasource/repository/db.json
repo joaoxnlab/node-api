@@ -1,18 +1,1 @@
-{
-  "student": [
-    {
-      "id": 6,
-      "name": "João Victor de Souza Olivo"
-    },
-    {
-      "id": 7,
-      "name": "Gabriel Sousa"
-    },
-    {
-      "id": 12,
-      "name": "Antony Valentim Garcia dos Santos"
-    }
-  ],
-  "teacher": [],
-  "lesson": []
-}
+{"student":[],"teacher":[],"lesson":[]}
