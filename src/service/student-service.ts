@@ -1,4 +1,4 @@
-import {DB_PATH, read, removeFromDB} from "../file-utils";
+import {DB_PATH, read, removeFromDB} from "../utils/files";
 import {Database, Raw, Student} from "../datasource/entity/entities";
 import { HttpError } from "../infra/error/error-classes";
 

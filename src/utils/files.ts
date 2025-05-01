@@ -1,6 +1,6 @@
 import fs from "fs";
-import { Database, DatabaseCounters, Entity } from "./datasource/entity/entities";
-import { HttpError } from "./infra/error/error-classes";
+import { Database, DatabaseCounters, Entity } from "../datasource/entity/entities";
+import { HttpError } from "../infra/error/error-classes";
 
 export { read, write, currentID, stepID, removeFromDB };
 

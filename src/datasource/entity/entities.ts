@@ -1,4 +1,4 @@
-import { DB_PATH, read, stepID, write, removeFromDB } from "../../file-utils";
+import { DB_PATH, read, stepID, write, removeFromDB } from "../../utils/files";
 
 export { Raw, DTO, Database, DatabaseCounters, Entity, Student, Teacher, Lesson };
 
