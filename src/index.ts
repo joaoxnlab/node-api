@@ -3,13 +3,15 @@ import express from 'express';
 import { loggerLevel, LogLevel } from './utils/logger';
 import { jsonParser } from './middleware/jsonParser';
 import { enableLoggedResponses, initRequestLogger } from './middleware/logs';
-import { errorHandler, jsonParserHandler } from './infra/error/error-handler';
+import { errorHandler, jsonParserHandler, listenUnhandledRejections } from './infra/error/error-handler';
 
 import { studentRouter } from './router/student-router';
 
 
-const PORT = 8800;
+listenUnhandledRejections();
+
 const app = express();
+const PORT = 8800;
 
 loggerLevel(LogLevel.INFO);
 

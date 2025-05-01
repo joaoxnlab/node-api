@@ -29,3 +29,16 @@ export function errorHandler(err: unknown, req: express.Request, res: express.Re
 
 	res.status(handler.status).json(handler);
 }
+
+export function listenUnhandledRejections() {
+	process.on('unhandledRejection', (reason, promise) => {
+		logger.log(
+			logger.LogLevel.FATAL, '(unknown METHOD)', '(unknown URL)', console.error,
+			'UnhandledRejection fatal error:', reason
+		);
+		logger.log(
+			logger.LogLevel.DEBUG, '(unknown METHOD)', '(unknown URL)', console.error,
+			'Unhandled Promise:', promise
+		)
+	});
+}
