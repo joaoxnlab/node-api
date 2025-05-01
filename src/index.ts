@@ -1,5 +1,6 @@
 import express from 'express';
 import { loggerLevel, LogLevel } from './utils/logger';
+import { jsonParser } from './middleware/jsonParser';
 import { enableLoggedResponses, initRequestLogger } from './middleware/logs';
 
 import { studentRouter } from './router/student-router';
@@ -11,6 +12,7 @@ const app = express();
 
 loggerLevel(LogLevel.INFO);
 
+app.use(jsonParser);
 app.use(initRequestLogger);
 app.use(enableLoggedResponses);
 app.use('/students', studentRouter);
