@@ -1,9 +1,14 @@
-import express, { type NextFunction, type Request, type Response } from 'express';
+import express from 'express';
 import * as logger from '../../utils/logger';
 import { HttpError, HttpErrorHandler } from './error-classes';
 
+export function jsonParserHandler(err: unknown) {
+	if (err instanceof SyntaxError && 'body' in err)
+		throw new HttpError(400, `Malformed JSON in Request Body: ${err.message}`, err);
+	throw err;
+}
 
-export function errorHandler(err: unknown, req: express.Request, res: express.Response, _next: NextFunction) {
+export function errorHandler(err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) {
 	let httpError: HttpError;
 
 	if (err instanceof HttpError)
