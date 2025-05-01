@@ -11,20 +11,27 @@ class HttpError extends Error {
 		this.message = message || "An unexpected error occurred";
 		this.cause = cause;
 	}
+
+	toString() {
+		return `HttpError ${this.statusCode}: ${this.message}
+		Cause: ${this.cause}`;
+	}
 }
 
 class HttpErrorHandler {
-	status: number;
-	error: string;
-	message: string;
+	readonly status: number;
+	readonly error: string;
+	readonly message: string;
+	readonly causeName?: string;
 
 	constructor(httpError: HttpError) {
 		this.status = httpError.statusCode;
 		this.error = HttpErrorHandler.httpStatusNameMap[httpError.statusCode];
 		this.message = httpError.message;
+		this.causeName = httpError.cause?.name;
 	}
 
-	static httpStatusNameMap: {[status: number]: string} = {
+	static readonly httpStatusNameMap: {[status: number]: string} = {
 		100: "Continue",
 		101: "Switching Protocols",
 		102: "Processing",
