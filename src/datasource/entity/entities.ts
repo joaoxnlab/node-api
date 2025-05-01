@@ -59,8 +59,7 @@ abstract class Entity {
         throw new Error("Method not implemented! Use derived class");
     }
 
-    //? TODO: Implement with creating errors and asserting or as-is?
-    static isValidDTO(_obj: unknown) {
+    static assertValidDTO(_obj: unknown) {
         throw new Error("Method not implemented! Use derived class");
     }
 }
@@ -85,9 +84,12 @@ class Student extends Entity {
         return new Student(obj.name, id);
     }
 
-    static isValidDTO(obj: unknown): obj is DTO<Student> {
-        return typeof obj === "object" && obj !== null
-            && "name" in obj && typeof obj.name === "string";
+    static assertValidDTO(obj: unknown): asserts obj is DTO<Student> {
+        if (typeof obj !== 'object' || obj === null)
+            throw new TypeError("Value is not of type OBJECT or is equal to null");
+
+        if (!('name' in obj) || typeof obj.name !== 'string')
+            throw new TypeError("Missing property 'name' of type 'string'");
     }
 }
 
@@ -111,9 +113,12 @@ class Teacher extends Entity {
         return new Teacher(obj.name, id);
     }
 
-    static isValidDTO(obj: unknown): obj is DTO<Student> {
-        return typeof obj === "object" && obj !== null
-            && "name" in obj && typeof obj.name === "string";
+    static assertValidDTO(obj: unknown): asserts obj is DTO<Student> {
+        if (typeof obj !== 'object' || obj === null)
+            throw new TypeError("Value is not of type OBJECT or is equal to null");
+
+        if (!('name' in obj) || typeof obj.name !== 'string')
+            throw new TypeError("Missing property 'name' of type 'string'");
     }
 }
 
@@ -137,8 +142,11 @@ class Lesson extends Entity {
         return new Lesson(obj.name, id);
     }
 
-    static isValidDTO(obj: unknown): obj is DTO<Student> {
-        return typeof obj === "object" && obj !== null
-            && "name" in obj && typeof obj.name === "string";
+    static assertValidDTO(obj: unknown): asserts obj is DTO<Student> {
+        if (typeof obj !== 'object' || obj === null)
+            throw new TypeError("Value is not of type OBJECT or is equal to null");
+
+        if (!('name' in obj) || typeof obj.name !== 'string')
+            throw new TypeError("Missing property 'name' of type 'string'");
     }
 }

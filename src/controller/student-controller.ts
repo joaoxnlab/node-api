@@ -1,6 +1,6 @@
-import { type NextFunction, Request, Response } from "express";
+import type { Request, Response } from "express";
 
-import { type Raw, Student } from "../datasource/entity/entities";
+import { type DTO, type Raw, Student } from "../datasource/entity/entities";
 import * as Service from "../service/student-service";
 import { HttpError, HttpErrorHandler } from "../infra/error/error-classes";
 
@@ -12,71 +12,66 @@ type ErrorHandled<T> = T | HttpErrorHandler;
 type HandledRawList = ErrorHandled<Raw<Student[]>>;
 type HandledRaw = ErrorHandled<Raw<Student>>
 
+type Body = Record<string, unknown> | undefined;
+
 type GetAllRequest = Request<{}, HandledRawList>;
 type GetRequest = Request<{ id: string }, HandledRaw>;
-type PostRequest = Request<{}, HandledRaw, unknown>;
-type PutRequest = Request<{ id: string }, HandledRaw, unknown>;
+type PostRequest = Request<{}, HandledRaw, Body>;
+type PutRequest = Request<{ id: string }, HandledRaw, Body>;
 type DeleteRequest = Request<{ id: string }, HandledRaw>;
 
 type StudentListResponse = Response<HandledRawList>;
 type StudentResponse = Response<HandledRaw>;
 
 
-function getAll(_req: GetAllRequest, res: StudentListResponse, next: NextFunction) {
-	Service.getAll()
-		.then(value => res.status(200).json(value))
-		.catch(next);
-}
-
-function idFromRequestHandler(req: Request<{id:string}>, _res: unknown, next: NextFunction) {
+function idFromPathParams(req: Request<{ id: string }>, _res: unknown) {
 	const id = Number(req.params.id);
 
-	if (isNaN(id)) {
-		next(new HttpError(
-			400,
-			`'id' path parameter must be a number. Received: ${req.params.id}`
-		));
-		return null;
-	}
+	if (isNaN(id)) throw new HttpError(
+		400,
+		`'id' path parameter must be a number. Received: ${req.params.id}`
+	);
 
 	return id;
 }
 
-function get(req: GetRequest, res: StudentResponse, next: NextFunction) {
-	const id = idFromRequestHandler(req, res, next);
-	if (id === null) return;
-
-	Service.get(id)
-		.then(value => res.status(200).json(value))
-		.catch(next);
+function assertValidDTO(body: Body): asserts body is DTO<Student> {
+	try {
+		Student.assertValidDTO(body);
+	} catch (err: unknown) {
+		if (err instanceof TypeError)
+			throw new HttpError(400, `Invalid Student DTO format: ${err.message}`, err);
+		throw err;
+	}
 }
 
-function post(req: PostRequest, res: StudentResponse, next: NextFunction) {
-	if (!Student.isValidDTO(req.body))
-		return next(new HttpError(400, "Invalid Student DTO format"));
-
-	Service.add(req.body)
-		.then(value => res.status(200).json(value))
-		.catch(next);
+async function getAll(_req: GetAllRequest, res: StudentListResponse) {
+	const students = await Service.getAll();
+	res.status(200).json(students);
 }
 
-function put(req: PutRequest, res: StudentResponse, next: NextFunction) {
-	if (!Student.isValidDTO(req.body))
-		return next(new HttpError(400, "Invalid Student DTO format"));
-
-	const id = idFromRequestHandler(req, res, next);
-	if (id === null) return;
-
-	Service.put(id, req.body)
-		.then(value => res.status(200).json(value))
-		.catch(next);
+async function get(req: GetRequest, res: StudentResponse) {
+	const id = idFromPathParams(req, res);
+	res.status(200).json(await Service.get(id));
 }
 
-function remove(req: DeleteRequest, res: StudentResponse, next: NextFunction) {
-	const id = idFromRequestHandler(req, res, next);
-	if (id === null) return;
+async function post(req: PostRequest, res: StudentResponse) {
+	assertValidDTO(req.body);
 
-	Service.remove(id)
-		.then(value => res.status(200).json(value))
-		.catch(next);
+	const newStudent = await Service.add(req.body);
+	res.status(201).json(newStudent);
+}
+
+async function put(req: PutRequest, res: StudentResponse) {
+	const id = idFromPathParams(req, res);
+	assertValidDTO(req.body);
+
+	const student = await Service.put(id, req.body);
+	res.status(200).json(student);
+}
+
+async function remove(req: DeleteRequest, res: StudentResponse) {
+	const id = idFromPathParams(req, res);
+	const student = await Service.remove(id);
+	res.status(200).json(student);
 }
