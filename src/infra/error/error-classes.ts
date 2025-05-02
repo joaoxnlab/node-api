@@ -11,6 +11,11 @@ class HttpError extends Error {
 		this.statusCode = statusCode || 500;
 		this.message = message || "An unexpected error occurred";
 		this.cause = cause;
+
+		if (statusCode && statusCode < 400)
+			return new HttpError(500,
+				`Cannot create an HttpError with a non-error status (Status: ${statusCode}).`
+				+` Cause: `+ this.message, this);
 	}
 
 	toString() {
@@ -27,12 +32,12 @@ class HttpErrorHandler {
 
 	constructor(httpError: HttpError) {
 		this.status = httpError.statusCode;
-		this.error = HttpErrorHandler.httpStatusNameMap[httpError.statusCode];
+		this.error = HttpErrorHandler.httpStatusNameMap[httpError.statusCode] || "Unknown";
 		this.message = httpError.message;
 		this.causeName = httpError.cause?.name;
 	}
 
-	static readonly httpStatusNameMap: {[status: number]: string} = {
+	static readonly httpStatusNameMap: {[key: number]: string | undefined} = {
 		100: "Continue",
 		101: "Switching Protocols",
 		102: "Processing",
