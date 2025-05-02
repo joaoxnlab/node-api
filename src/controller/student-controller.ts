@@ -1,8 +1,8 @@
 import type { Request, Response } from "express";
 
 import { type DTO, type Raw, Student } from "../datasource/entity/entities";
-import { GenericService } from "../service/generic-service";
 import { HttpError, HttpErrorHandler } from "../infra/error/error-classes";
+import { StudentService } from "../service/student-service";
 
 export { getAll, get, post, put, remove };
 
@@ -24,7 +24,7 @@ type StudentListResponse = Response<HandledRawList>;
 type StudentResponse = Response<HandledRaw>;
 
 
-const Service = new GenericService<Student>(Student);
+const service = new StudentService();
 
 function idFromPathParams(req: Request<{ id: string }>, _res: unknown) {
 	const id = Number(req.params.id);
@@ -48,19 +48,19 @@ function assertValidDTO(body: Body): asserts body is DTO<Student> {
 }
 
 async function getAll(_req: GetAllRequest, res: StudentListResponse) {
-	const students = await Service.getAll();
+	const students = await service.getAll();
 	res.status(200).json(students);
 }
 
 async function get(req: GetRequest, res: StudentResponse) {
 	const id = idFromPathParams(req, res);
-	res.status(200).json(await Service.get(id));
+	res.status(200).json(await service.get(id));
 }
 
 async function post(req: PostRequest, res: StudentResponse) {
 	assertValidDTO(req.body);
 
-	const newStudent = await Service.add(req.body);
+	const newStudent = await service.add(req.body);
 	res.status(201).json(newStudent);
 }
 
@@ -68,12 +68,12 @@ async function put(req: PutRequest, res: StudentResponse) {
 	const id = idFromPathParams(req, res);
 	assertValidDTO(req.body);
 
-	const student = await Service.put(id, req.body);
+	const student = await service.put(id, req.body);
 	res.status(200).json(student);
 }
 
 async function remove(req: DeleteRequest, res: StudentResponse) {
 	const id = idFromPathParams(req, res);
-	const student = await Service.remove(id);
+	const student = await service.remove(id);
 	res.status(200).json(student);
 }

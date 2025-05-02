@@ -28,15 +28,15 @@ export class GenericService<T extends Entity> {
 		return entities[index];
 	}
 
-	async add(rawEntity: Omit<Raw<T>, 'id'>): Promise<T> {
-		const entity = await this.EntityConstructor.fromObjectAsync(rawEntity);
+	async add(entityDTO: DTO<T>): Promise<T> {
+		const entity = await this.EntityConstructor.fromObjectAsync(entityDTO);
 		await entity.saveToDB();
 		return entity;
 	}
 
-	async put(id: number, rawEntity: Omit<Raw<T>, 'id'>): Promise<T> {
+	async put(id: number, entityDTO: DTO<T>): Promise<T> {
 		await removeFromDB(id, this.EntityConstructor.dbKey);
-		const entity = this.EntityConstructor.fromObject(id, rawEntity);
+		const entity = this.EntityConstructor.fromObject(id, entityDTO);
 		await entity.saveToDB();
 		return entity;
 	}
