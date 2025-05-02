@@ -23,6 +23,71 @@ type DatabaseCounters<T = number> = {
     teacher: T,
     lesson: T
 }
+type Primitive = 'undefined' | 'object' | 'boolean' | 'number' | 'bigint' | 'string' | 'symbol' | 'function';
+
+function assertPropertyValue(obj: unknown, key: string | number, value: unknown) {
+    if (typeof obj !== 'object' || obj === null)
+        throw new TypeError("Value is not of type OBJECT or is equal to null");
+
+    if (!(key in obj)) throw new TypeError(
+        `Missing property '${key}' of type '${typeof value}' and value '${String(value)}'`
+    );
+
+    const valueFromObj = (obj as object & {[key]: unknown})[key];
+
+    if (valueFromObj !== value) throw new TypeError(
+        `Expected property '${key}' with type '${typeof value}' and value '${String(value)}'.`
+        +` Received with type: '${typeof valueFromObj}' and value '${valueFromObj}'`
+    );
+}
+
+function assertPropertyType(obj: unknown, key: string | number, typeOrUnion: Primitive[] | Primitive) {
+    let typeVisualization: string;
+    if (typeof typeOrUnion === 'string') typeVisualization = typeOrUnion;
+    else typeVisualization = typeOrUnion.join(' | ');
+
+    if (typeof obj !== 'object' || obj === null)
+        throw new TypeError("Value is not of type OBJECT or is equal to null");
+
+    if (!(key in obj)) throw new TypeError(`Missing property '${key}' of type '${typeVisualization}'`);
+
+    const objType = typeof (obj as object & {[key]: unknown})[key];
+    
+    let hasCorrectType;
+    if (typeof typeOrUnion === 'string') hasCorrectType = objType === typeOrUnion;
+    else hasCorrectType = typeOrUnion.includes(objType);
+    
+    if (!hasCorrectType) throw new TypeError(
+        `Expected property '${key}' with type '${typeVisualization}'. Received with type: '${objType}'`
+    );
+}
+
+class Value {
+    data: unknown;
+    primitiveType: Primitive;
+    constructor(data: unknown) {
+        this.data = data;
+        this.primitiveType = typeof data;
+    }
+}
+
+/**
+ * Asserts `obj` is an object and has properties with types and values according to `schema`.
+ *
+ * @param obj - Object with propertiees to be asserted.
+ * @param schema - Use the schema to dictate how to check for the type of `obj`.
+ * <br/> - Put the keys that the object has to check for those keys;
+ * <br/> - Put the value as a `Primitive` (string with name of a primitive type) to check for the primitive type;
+ * <br/> - Put the value as an instance of Value to compare the exact values of `obj[key]` and `Value.data`.
+ */
+function assertPropertiesByValueAndPrimitiveType(obj: unknown, schema: {[key: string | number]: Primitive | Value}) {
+    for (const key in schema) {
+        const value = schema[key];
+        if (value instanceof Value)
+            assertPropertyValue(obj, key, value);
+        else assertPropertyType(obj, key, value);
+    }
+}
 
 abstract class Entity {
     id?: number;
@@ -76,20 +141,19 @@ class Student extends Entity {
         return "student";
     }
 
-    static async fromObjectAsync(obj: { name: string }) {
+    static async fromObjectAsync(obj: DTO<Student>) {
         return new Student(obj.name).generateID();
     }
 
-    static fromObject(id: number, obj: { name: string }) {
+    static fromObject(id: number, obj: DTO<Student>) {
         return new Student(obj.name, id);
     }
 
     static assertValidDTO(obj: unknown): asserts obj is DTO<Student> {
-        if (typeof obj !== 'object' || obj === null)
-            throw new TypeError("Value is not of type OBJECT or is equal to null");
-
-        if (!('name' in obj) || typeof obj.name !== 'string')
-            throw new TypeError("Missing property 'name' of type 'string'");
+        const schema: {[key: string | number]: Primitive | Value} = {
+            name: 'string'
+        }
+        assertPropertiesByValueAndPrimitiveType(obj, schema);
     }
 }
 
@@ -105,20 +169,19 @@ class Teacher extends Entity {
         return "teacher";
     }
 
-    static async fromObjectAsync(obj: { name: string }) {
+    static async fromObjectAsync(obj: DTO<Teacher>) {
         return new Teacher(obj.name).generateID();
     }
 
-    static fromObject(id: number, obj: { name: string }) {
+    static fromObject(id: number, obj: DTO<Teacher>) {
         return new Teacher(obj.name, id);
     }
 
-    static assertValidDTO(obj: unknown): asserts obj is DTO<Student> {
-        if (typeof obj !== 'object' || obj === null)
-            throw new TypeError("Value is not of type OBJECT or is equal to null");
-
-        if (!('name' in obj) || typeof obj.name !== 'string')
-            throw new TypeError("Missing property 'name' of type 'string'");
+    static assertValidDTO(obj: unknown): asserts obj is DTO<Teacher> {
+        const schema: {[key: string | number]: Primitive | Value} = {
+            name: 'string'
+        }
+        assertPropertiesByValueAndPrimitiveType(obj, schema);
     }
 }
 
@@ -134,19 +197,18 @@ class Lesson extends Entity {
         return "lesson";
     }
 
-    static async fromObjectAsync(obj: { name: string }) {
+    static async fromObjectAsync(obj: DTO<Lesson>) {
         return new Lesson(obj.name).generateID();
     }
 
-    static fromObject(id: number, obj: { name: string }) {
+    static fromObject(id: number, obj: DTO<Lesson>) {
         return new Lesson(obj.name, id);
     }
 
-    static assertValidDTO(obj: unknown): asserts obj is DTO<Student> {
-        if (typeof obj !== 'object' || obj === null)
-            throw new TypeError("Value is not of type OBJECT or is equal to null");
-
-        if (!('name' in obj) || typeof obj.name !== 'string')
-            throw new TypeError("Missing property 'name' of type 'string'");
+    static assertValidDTO(obj: unknown): asserts obj is DTO<Lesson> {
+        const schema: {[key: string | number]: Primitive | Value} = {
+            name: 'string'
+        }
+        assertPropertiesByValueAndPrimitiveType(obj, schema);
     }
 }
