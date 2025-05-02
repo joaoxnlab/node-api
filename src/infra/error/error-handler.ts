@@ -40,11 +40,11 @@ export function errorHandler(err: unknown, req: express.Request, res: express.Re
 export function listenUnhandledRejections() {
 	process.on('unhandledRejection', (reason, promise) => {
 		logger.log(
-			logger.LogLevel.FATAL, '(unknown METHOD)', '(unknown URL)', console.error,
+			logger.LogLevel.FATAL, '(UNKNOWN method)', '(UNKNOWN url)', console.error,
 			'UnhandledRejection fatal error:', reason
 		);
 		logger.log(
-			logger.LogLevel.DEBUG, '(unknown METHOD)', '(unknown URL)', console.error,
+			logger.LogLevel.DEBUG, '(UNKNOWN method)', '(UNKNOWN url)', console.error,
 			'Unhandled Promise:', promise
 		)
 	});

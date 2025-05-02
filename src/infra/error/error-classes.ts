@@ -7,6 +7,7 @@ class HttpError extends Error {
 
 	constructor(statusCode?: number, message?: string, cause?: Error) {
 		super(message);
+		this.name = 'HttpError';
 		this.statusCode = statusCode || 500;
 		this.message = message || "An unexpected error occurred";
 		this.cause = cause;
