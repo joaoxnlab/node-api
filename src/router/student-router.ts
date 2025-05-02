@@ -3,8 +3,6 @@ import * as Student from "../controller/student-controller";
 
 export const studentRouter = express.Router();
 
-// TODO: Implement invalid route support
-// Example: POST /student/:id -> 404 NOT FOUND
 studentRouter.get('', Student.getAll);
 studentRouter.get('/:id', Student.get);
 studentRouter.post('', Student.post);

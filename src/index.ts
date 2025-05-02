@@ -21,6 +21,10 @@ app.use(jsonParserHandler);
 app.use(initRequestLogger);
 app.use(enableLoggedResponses);
 app.use('/students', studentRouter);
+app.all('/{*path}', (req, _res, next) => {
+    next(new HttpError(404, `Router with Path '${req.originalUrl}' Not Found`));
+});
+
 app.use(errorHandler);
 
 app.listen(PORT, () => {
