@@ -106,7 +106,7 @@ abstract class Entity {
     async saveToDB() {
         if (this.id !== 0 && !this.id) throw new Error("ID is required to save the Entity to the Database");
         const db = await read(DB_PATH, JSON.parse) as Database;
-        (db[this.dbKey()] as unknown  as typeof this[]).push(this);
+        (db[this.dbKey()] as unknown as typeof this[]).push(this);
 
         await write(DB_PATH, JSON.stringify(db));
     }
@@ -116,7 +116,7 @@ abstract class Entity {
         return removeFromDB(this.id, this.dbKey());
     }
 
-    static fromObjectAsync(_object: Record<string, unknown>) {
+    static async fromObjectAsync(_object: Record<string, unknown>): Promise<Entity> {
         throw new Error("Method not implemented! Use derived class")
     }
 
@@ -132,13 +132,15 @@ abstract class Entity {
 class Student extends Entity {
     name: string;
 
+    static readonly dbKey = "student";
+
     constructor(name: string, id?: number) {
         super(id);
         this.name = name;
     }
 
     dbKey(): keyof DatabaseCounters {
-        return "student";
+        return Student.dbKey;
     }
 
     static async fromObjectAsync(obj: DTO<Student>) {
@@ -160,13 +162,15 @@ class Student extends Entity {
 class Teacher extends Entity {
     name: string;
 
+    static readonly dbKey = "teacher";
+
     constructor(name: string, id?: number) {
         super(id);
         this.name = name;
     }
 
     dbKey(): keyof DatabaseCounters {
-        return "teacher";
+        return Teacher.dbKey;
     }
 
     static async fromObjectAsync(obj: DTO<Teacher>) {
@@ -188,13 +192,15 @@ class Teacher extends Entity {
 class Lesson extends Entity {
     name: string;
 
+    static readonly dbKey = "lesson";
+
     constructor(name: string, id?: number) {
         super(id);
         this.name = name;
     }
 
     dbKey(): keyof DatabaseCounters {
-        return "lesson";
+        return Lesson.dbKey;
     }
 
     static async fromObjectAsync(obj: DTO<Lesson>) {

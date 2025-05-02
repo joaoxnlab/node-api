@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 
 import { type DTO, type Raw, Student } from "../datasource/entity/entities";
-import * as Service from "../service/student-service";
+import { GenericService } from "../service/generic-service";
 import { HttpError, HttpErrorHandler } from "../infra/error/error-classes";
 
 export { getAll, get, post, put, remove };
@@ -23,6 +23,8 @@ type DeleteRequest = Request<{ id: string }, HandledRaw>;
 type StudentListResponse = Response<HandledRawList>;
 type StudentResponse = Response<HandledRaw>;
 
+
+const Service = new GenericService<Student>(Student);
 
 function idFromPathParams(req: Request<{ id: string }>, _res: unknown) {
 	const id = Number(req.params.id);
