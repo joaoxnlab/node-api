@@ -32,23 +32,37 @@ type DatabaseCounters<T = number> = {
 }
 type Primitive = 'undefined' | 'object' | 'boolean' | 'number' | 'bigint' | 'string' | 'symbol' | 'function';
 
+type EntitySchema = {
+    [key: string | number]: Primitive | Primitive[] | Value
+}
+
+class Value {
+    data: unknown;
+    constructor(data: unknown) {
+        this.data = data;
+    }
+}
+
 function assertPropertyValue(obj: unknown, key: string | number, value: unknown) {
+    if (typeof value === 'object')
+        throw new Error("Value cannot be of type OBJECT because object comparisons is always false.");
+
     if (typeof obj !== 'object' || obj === null)
         throw new TypeError("Value is not of type OBJECT or is equal to null");
 
     if (!(key in obj)) throw new TypeError(
-        `Missing property '${key}' of type '${typeof value}' and value '${String(value)}'`
+        `Missing property '${key}' of type '${typeof value}' and value '${value}'`
     );
 
     const valueFromObj = (obj as object & {[key]: unknown})[key];
 
     if (valueFromObj !== value) throw new TypeError(
-        `Expected property '${key}' with type '${typeof value}' and value '${String(value)}'.`
+        `Expected property '${key}' with type '${typeof value}' and value '${value}'.`
         +` Received with type: '${typeof valueFromObj}' and value '${valueFromObj}'`
     );
 }
 
-function assertPropertyType(obj: unknown, key: string | number, typeOrUnion: Primitive[] | Primitive) {
+function assertPropertyType(obj: unknown, key: string | number, typeOrUnion: Primitive | Primitive[], requireKeyWhenUndefined = false) {
     let typeVisualization: string;
     if (typeof typeOrUnion === 'string') typeVisualization = typeOrUnion;
     else typeVisualization = typeOrUnion.join(' | ');
@@ -56,7 +70,14 @@ function assertPropertyType(obj: unknown, key: string | number, typeOrUnion: Pri
     if (typeof obj !== 'object' || obj === null)
         throw new TypeError("Value is not of type OBJECT or is equal to null");
 
-    if (!(key in obj)) throw new TypeError(`Missing property '${key}' of type '${typeVisualization}'`);
+    if (!(key in obj)) {
+        if (!requireKeyWhenUndefined && (
+            typeOrUnion === 'undefined' ||
+            Array.isArray(typeOrUnion) && typeOrUnion.includes('undefined')
+        )) return;
+
+        throw new TypeError(`Missing property '${key}' of type '${typeVisualization}'`);
+    }
 
     const objType = typeof (obj as object & {[key]: unknown})[key];
     
@@ -69,15 +90,6 @@ function assertPropertyType(obj: unknown, key: string | number, typeOrUnion: Pri
     );
 }
 
-class Value {
-    data: unknown;
-    primitiveType: Primitive;
-    constructor(data: unknown) {
-        this.data = data;
-        this.primitiveType = typeof data;
-    }
-}
-
 /**
  * Asserts `obj` is an object and has properties with types and values according to `schema`.
  *
@@ -86,13 +98,14 @@ class Value {
  * <br/> - Put the keys that the object has to check for those keys;
  * <br/> - Put the value as a `Primitive` (string with name of a primitive type) to check for the primitive type;
  * <br/> - Put the value as an instance of Value to compare the exact values of `obj[key]` and `Value.data`.
+ * @param requireKeyWhenUndefined - Tells if function should throw an error when `key in obj` is false.
  */
-function assertPropertiesByValueAndPrimitiveType(obj: unknown, schema: {[key: string | number]: Primitive | Value}) {
+function assertPropertiesByValueAndPrimitiveType(obj: unknown, schema: EntitySchema, requireKeyWhenUndefined = false) {
     for (const key in schema) {
         const value = schema[key];
         if (value instanceof Value)
-            assertPropertyValue(obj, key, value);
-        else assertPropertyType(obj, key, value);
+            assertPropertyValue(obj, key, value.data);
+        else assertPropertyType(obj, key, value, requireKeyWhenUndefined);
     }
 }
 
@@ -138,12 +151,21 @@ abstract class Entity {
 
 class Student extends Entity {
     name: string;
+    age: number;
+    phone?: string;
 
     static readonly dbKey = "student";
+    static schema: EntitySchema = {
+        name: 'string',
+        age: 'number',
+        phone: ['string', 'undefined']
+    }
 
-    constructor(name: string, id?: number) {
+    constructor(name: string, age: number, phone?: string, id?: number) {
         super(id);
         this.name = name;
+        this.age = age;
+        this.phone = phone;
     }
 
     dbKey(): keyof DatabaseCounters {
@@ -151,7 +173,7 @@ class Student extends Entity {
     }
 
     static async fromObjectAsync(obj: DTO<Student>) {
-        return new Student(obj.name).generateID();
+        return new Student(obj.name, obj.age, obj.phone).generateID();
     }
 
     static fromObject(id: number, obj: DTO<Student>) {
@@ -159,17 +181,23 @@ class Student extends Entity {
     }
 
     static assertValidDTO(obj: unknown): asserts obj is DTO<Student> {
-        const schema: {[key: string | number]: Primitive | Value} = {
-            name: 'string'
+        const schema: EntitySchema = {
+            name: 'string',
+            age: 'number',
+            phone: ['string', 'undefined']
         }
-        assertPropertiesByValueAndPrimitiveType(obj, schema);
+        assertPropertiesByValueAndPrimitiveType(obj, Student.schema);
     }
 }
+
 
 class Teacher extends Entity {
     name: string;
 
     static readonly dbKey = "teacher";
+    static schema: EntitySchema = {
+        name: 'string'
+    }
 
     constructor(name: string, id?: number) {
         super(id);
@@ -189,10 +217,7 @@ class Teacher extends Entity {
     }
 
     static assertValidDTO(obj: unknown): asserts obj is DTO<Teacher> {
-        const schema: {[key: string | number]: Primitive | Value} = {
-            name: 'string'
-        }
-        assertPropertiesByValueAndPrimitiveType(obj, schema);
+        assertPropertiesByValueAndPrimitiveType(obj, Teacher.schema);
     }
 }
 
@@ -200,6 +225,9 @@ class Lesson extends Entity {
     name: string;
 
     static readonly dbKey = "lesson";
+    static schema: EntitySchema = {
+        name: 'string'
+    }
 
     constructor(name: string, id?: number) {
         super(id);
@@ -219,9 +247,6 @@ class Lesson extends Entity {
     }
 
     static assertValidDTO(obj: unknown): asserts obj is DTO<Lesson> {
-        const schema: {[key: string | number]: Primitive | Value} = {
-            name: 'string'
-        }
-        assertPropertiesByValueAndPrimitiveType(obj, schema);
+        assertPropertiesByValueAndPrimitiveType(obj, Lesson.schema);
     }
 }
