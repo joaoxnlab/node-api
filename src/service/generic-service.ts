@@ -1,14 +1,6 @@
 import {DB_PATH, read, removeFromDB} from "../utils/files";
-import { Database, type DatabaseCounters, type DTO, type Entity, Raw } from "../datasource/entity/entities";
+import { Database, EntityConstructor, type DTO, type Entity, Raw } from "../datasource/entity/entities";
 import { HttpError } from "../infra/error/error-classes";
-
-
-interface EntityConstructor<T> {
-	new(...args: any[]): T;
-	fromObjectAsync(obj: DTO<T>): Promise<T>;
-	fromObject(id: number, _obj: DTO<T>): T;
-	dbKey: keyof DatabaseCounters;
-}
 
 export class GenericService<T extends Entity> {
 	constructor(private EntityConstructor: EntityConstructor<T>) {}

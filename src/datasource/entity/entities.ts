@@ -1,6 +1,6 @@
 import { DB_PATH, read, stepID, write, removeFromDB } from "../../utils/files";
 
-export { Raw, DTO, Database, DatabaseCounters, Entity, Student, Teacher, Lesson };
+export { Raw, DTO, Database, DatabaseCounters, Entity, EntityConstructor, Student, Teacher, Lesson };
 
 type Raw<T> =
     T extends Function ? never :
@@ -11,6 +11,13 @@ type Raw<T> =
                 T;
 
 type DTO<T> = Omit<Raw<T>, 'id'>;
+
+interface EntityConstructor<T> {
+    new(...args: any[]): T;
+    fromObjectAsync(obj: DTO<T>): Promise<T>;
+    fromObject(id: number, _obj: DTO<T>): T;
+    dbKey: keyof DatabaseCounters;
+}
 
 type Database = {
     student: Student[],
