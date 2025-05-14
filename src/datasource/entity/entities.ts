@@ -112,28 +112,28 @@ function assertPropertiesByValueAndPrimitiveType(obj: unknown, schema: EntitySch
 abstract class Entity {
     id?: number;
 
-    abstract dbKey(): keyof DatabaseCounters;
-
     protected constructor(id?: number) {
         this.id = id;
     }
 
+    abstract class(): EntityConstructor<Entity>;
+
     async generateID() {
-        this.id = await stepID(this.dbKey());
+        this.id = await stepID(this.class().dbKey);
         return this;
     }
 
     async saveToDB() {
         if (this.id !== 0 && !this.id) throw new Error("ID is required to save the Entity to the Database");
         const db = await read(DB_PATH, JSON.parse) as Database;
-        (db[this.dbKey()] as unknown as typeof this[]).push(this);
+        (db[this.class().dbKey] as unknown as typeof this[]).push(this);
 
         await write(DB_PATH, JSON.stringify(db));
     }
 
     async removeFromDB() {
         if (this.id !== 0 && !this.id) throw new Error("ID is required to remove the Entity from the Database");
-        return removeFromDB(this.id, this.dbKey());
+        return removeFromDB(this.id, this.class().dbKey);
     }
 
     static async fromObjectAsync(_object: Record<string, unknown>): Promise<Entity> {
@@ -168,8 +168,8 @@ class Student extends Entity {
         this.phone = phone;
     }
 
-    dbKey(): keyof DatabaseCounters {
-        return Student.dbKey;
+    class() {
+        return Student;
     }
 
     static async fromObjectAsync(obj: DTO<Student>) {
@@ -204,8 +204,8 @@ class Teacher extends Entity {
         this.name = name;
     }
 
-    dbKey(): keyof DatabaseCounters {
-        return Teacher.dbKey;
+    class() {
+        return Teacher;
     }
 
     static async fromObjectAsync(obj: DTO<Teacher>) {
@@ -234,8 +234,8 @@ class Lesson extends Entity {
         this.name = name;
     }
 
-    dbKey(): keyof DatabaseCounters {
-        return Lesson.dbKey;
+    class() {
+        return Lesson;
     }
 
     static async fromObjectAsync(obj: DTO<Lesson>) {
