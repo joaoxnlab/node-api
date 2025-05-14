@@ -30,11 +30,14 @@ type DatabaseCounters<T = number> = {
     teacher: T,
     lesson: T
 }
+
 type Primitive = 'undefined' | 'object' | 'boolean' | 'number' | 'bigint' | 'string' | 'symbol' | 'function';
 
 type EntitySchema = {
     [key: string | number]: Primitive | Primitive[] | Value
 }
+
+type Schema<T extends Object> = Map<keyof DTO<T>, Primitive | Primitive[] | Value>;
 
 class Value {
     data: unknown;
@@ -181,11 +184,6 @@ class Student extends Entity {
     }
 
     static assertValidDTO(obj: unknown): asserts obj is DTO<Student> {
-        const schema: EntitySchema = {
-            name: 'string',
-            age: 'number',
-            phone: ['string', 'undefined']
-        }
         assertPropertiesByValueAndPrimitiveType(obj, Student.schema);
     }
 }
