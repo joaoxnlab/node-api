@@ -136,7 +136,7 @@ abstract class Entity {
         return removeFromDB(this.id, this.class().dbKey);
     }
 
-    static async fromObjectAsync(_object: Record<string, unknown>): Promise<Entity> {
+    static fromObjectAsync(_object: Record<string, unknown>) {
         throw new Error("Method not implemented! Use derived class")
     }
 
@@ -177,7 +177,7 @@ class Student extends Entity {
     }
 
     static fromObject(id: number, obj: DTO<Student>) {
-        return new Student(obj.name, id);
+        return new Student(obj.name, obj.age, obj.phone, id);
     }
 
     static assertValidDTO(obj: unknown): asserts obj is DTO<Student> {
