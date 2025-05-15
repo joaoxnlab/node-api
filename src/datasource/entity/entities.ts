@@ -32,9 +32,10 @@ type DatabaseCounters<T = number> = {
 }
 
 type Primitive = 'undefined' | 'object' | 'boolean' | 'number' | 'bigint' | 'string' | 'symbol' | 'function';
+type Key = string | number;
 
 type EntitySchema = {
-    [key: string | number]: Primitive | Primitive[] | Value
+    [key: Key]: Primitive | Primitive[] | Value
 }
 
 type Schema<T extends Object> = Map<keyof DTO<T>, Primitive | Primitive[] | Value>;
@@ -46,7 +47,7 @@ class Value {
     }
 }
 
-function assertPropertyValue(obj: unknown, key: string | number, value: unknown) {
+function assertPropertyValue(obj: unknown, key: Key, value: unknown) {
     if (typeof value === 'object')
         throw new Error("Value cannot be of type OBJECT because object comparisons is always false.");
 
@@ -57,7 +58,7 @@ function assertPropertyValue(obj: unknown, key: string | number, value: unknown)
         `Missing property '${key}' of type '${typeof value}' and value '${value}'`
     );
 
-    const valueFromObj = (obj as object & {[key]: unknown})[key];
+    const valueFromObj = (obj as object & {[key: Key]: unknown})[key];
 
     if (valueFromObj !== value) throw new TypeError(
         `Expected property '${key}' with type '${typeof value}' and value '${value}'.`
@@ -65,7 +66,7 @@ function assertPropertyValue(obj: unknown, key: string | number, value: unknown)
     );
 }
 
-function assertPropertyType(obj: unknown, key: string | number, typeOrUnion: Primitive | Primitive[], requireKeyWhenUndefined = false) {
+function assertPropertyType(obj: unknown, key: Key, typeOrUnion: Primitive | Primitive[], requireKeyWhenUndefined = false) {
     let typeVisualization: string;
     if (typeof typeOrUnion === 'string') typeVisualization = typeOrUnion;
     else typeVisualization = typeOrUnion.join(' | ');
@@ -82,7 +83,7 @@ function assertPropertyType(obj: unknown, key: string | number, typeOrUnion: Pri
         throw new TypeError(`Missing property '${key}' of type '${typeVisualization}'`);
     }
 
-    const objType = typeof (obj as object & {[key]: unknown})[key];
+    const objType = typeof (obj as object & {[key: Key]: unknown})[key];
     
     let hasCorrectType;
     if (typeof typeOrUnion === 'string') hasCorrectType = objType === typeOrUnion;
