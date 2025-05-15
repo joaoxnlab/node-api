@@ -32,15 +32,15 @@ type DatabaseCounters<T = number> = {
 }
 
 type PrimitiveString = 'undefined' | 'object' | 'boolean' | 'number' | 'bigint' | 'string' | 'symbol' | 'function';
-type OptionalSchemaValue = PrimitiveString | 'nothing'; // 'nothing' means `key in obj` is false
+type OptionalSchemaType = PrimitiveString | 'nothing'; // 'nothing' means `key in obj` is false
 type Key = string | number;
 
 type EntitySchema = {
-    [key: Key]: PrimitiveString | OptionalSchemaValue[] | Value
+    [key: Key]: PrimitiveString | OptionalSchemaType[] | Value
 }
 
 type Schema<T extends Object> = {
-    [P in keyof DTO<T>]: PrimitiveString | OptionalSchemaValue[] | Value
+    [P in keyof DTO<T>]: PrimitiveString | OptionalSchemaType[] | Value
 };
 
 class Value {
@@ -61,7 +61,7 @@ function assertPropertyValue(obj: unknown, key: Key, value: unknown) {
         `Missing property '${key}' of type '${typeof value}' and value '${value}'`
     );
 
-    const valueFromObj = (obj as object & {[key: Key]: unknown})[key];
+    const valueFromObj = (obj as {[key: Key]: unknown})[key];
 
     if (valueFromObj !== value) throw new TypeError(
         `Expected property '${key}' with type '${typeof value}' and value '${value}'.`
@@ -69,7 +69,7 @@ function assertPropertyValue(obj: unknown, key: Key, value: unknown) {
     );
 }
 
-function assertPropertyType(obj: unknown, key: Key, typeOrUnion: Primitive | Primitive[], requireKeyWhenUndefined = false) {
+function assertPropertyType(obj: unknown, key: Key, typeOrUnion: PrimitiveString | OptionalSchemaType[]) {
     let typeVisualization: string;
     if (typeof typeOrUnion === 'string') typeVisualization = typeOrUnion;
     else typeVisualization = typeOrUnion.join(' | ');
@@ -78,15 +78,11 @@ function assertPropertyType(obj: unknown, key: Key, typeOrUnion: Primitive | Pri
         throw new TypeError("Value is not of type OBJECT or is equal to null");
 
     if (!(key in obj)) {
-        if (!requireKeyWhenUndefined && (
-            typeOrUnion === 'undefined' ||
-            Array.isArray(typeOrUnion) && typeOrUnion.includes('undefined')
-        )) return;
-
+        if (Array.isArray(typeOrUnion) && typeOrUnion.includes('nothing')) return;
         throw new TypeError(`Missing property '${key}' of type '${typeVisualization}'`);
     }
 
-    const objType = typeof (obj as object & {[key: Key]: unknown})[key];
+    const objType = typeof (obj as {[key: Key]: unknown})[key];
     
     let hasCorrectType;
     if (typeof typeOrUnion === 'string') hasCorrectType = objType === typeOrUnion;
@@ -100,19 +96,19 @@ function assertPropertyType(obj: unknown, key: Key, typeOrUnion: Primitive | Pri
 /**
  * Asserts `obj` is an object and has properties with types and values according to `schema`.
  *
- * @param obj - Object with propertiees to be asserted.
- * @param schema - Use the schema to dictate how to check for the type of `obj`.
+ * @param obj - Object with properties to be asserted.
+ * @param schema - Use the schema to dictate how to check for the type of {@link obj}.
  * <br/> - Put the keys that the object has to check for those keys;
- * <br/> - Put the value as a `Primitive` (string with name of a primitive type) to check for the primitive type;
+ * <br/> - Put the value as a {@link PrimitiveString} to check for a primitive type;
+ * <br/> - Put the value as an Array of {@link OptionalSchemaType} to check if it has any of the included types ('nothing' means property does not exist);
  * <br/> - Put the value as an instance of Value to compare the exact values of `obj[key]` and `Value.data`.
- * @param requireKeyWhenUndefined - Tells if function should throw an error when `key in obj` is false.
  */
-function assertPropertiesByValueAndPrimitiveType(obj: unknown, schema: EntitySchema, requireKeyWhenUndefined = false) {
+function assertPropertiesByValueAndPrimitiveType(obj: unknown, schema: EntitySchema) {
     for (const key in schema) {
         const value = schema[key];
         if (value instanceof Value)
             assertPropertyValue(obj, key, value.data);
-        else assertPropertyType(obj, key, value, requireKeyWhenUndefined);
+        else assertPropertyType(obj, key, value);
     }
 }
 
