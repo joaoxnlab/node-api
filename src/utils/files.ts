@@ -1,11 +1,12 @@
 import fs from "fs";
 import { Database, DatabaseCounters, Entity } from "../datasource/entity/entities";
 import { HttpError } from "../infra/error/error-classes";
+import * as path from "node:path";
 
 export { read, write, currentID, stepID, removeFromDB };
 
-export const DB_PATH = "./datasource/repository/db.json";
-export const DB_COUNTER_PATH = "./datasource/repository/db-counter.json";
+export const DB_PATH = path.join(__dirname, '..', 'datasource', 'repository', 'db.json');
+export const DB_COUNTER_PATH = path.join(__dirname, '..', 'datasource', 'repository', 'db-counter.json');
 export const FILE_ENCODING = "utf8";
 function read<T>(file: fs.PathOrFileDescriptor,
                  parser: (data: string) => T): Promise<T> {

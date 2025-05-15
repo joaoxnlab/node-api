@@ -1,7 +1,8 @@
 import fs from "fs";
 import { log, LogLevel } from "../utils/logger";
+import * as path from "node:path";
 
-
+const sourcePath = path.join(__dirname, '..');
 const files = [
 	"index.ts",
 	"utils/files.ts",
@@ -131,7 +132,7 @@ export function logLinesStatus() {
 
 	files.forEach(file => {
 		try {
-			perFileReader(file, data);
+			perFileReader(path.join(sourcePath, file), data);
 		} catch (e) {
 			console.warn(`Error while reading status of ${file}`);
 			log(
