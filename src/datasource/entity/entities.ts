@@ -31,14 +31,17 @@ type DatabaseCounters<T = number> = {
     lesson: T
 }
 
-type Primitive = 'undefined' | 'object' | 'boolean' | 'number' | 'bigint' | 'string' | 'symbol' | 'function';
+type PrimitiveString = 'undefined' | 'object' | 'boolean' | 'number' | 'bigint' | 'string' | 'symbol' | 'function';
+type OptionalSchemaValue = PrimitiveString | 'nothing'; // 'nothing' means `key in obj` is false
 type Key = string | number;
 
 type EntitySchema = {
-    [key: Key]: Primitive | Primitive[] | Value
+    [key: Key]: PrimitiveString | OptionalSchemaValue[] | Value
 }
 
-type Schema<T extends Object> = Map<keyof DTO<T>, Primitive | Primitive[] | Value>;
+type Schema<T extends Object> = {
+    [P in keyof DTO<T>]: PrimitiveString | OptionalSchemaValue[] | Value
+};
 
 class Value {
     data: unknown;
@@ -156,10 +159,10 @@ abstract class Entity {
 class Student extends Entity {
     name: string;
     age: number;
-    phone?: string;
+    phone: string | undefined;
 
     static readonly dbKey = "student";
-    static schema: EntitySchema = {
+    static schema: Schema<Student> = {
         name: 'string',
         age: 'number',
         phone: ['string', 'undefined']
@@ -194,7 +197,7 @@ class Teacher extends Entity {
     name: string;
 
     static readonly dbKey = "teacher";
-    static schema: EntitySchema = {
+    static schema: Schema<Teacher> = {
         name: 'string'
     }
 
@@ -224,7 +227,7 @@ class Lesson extends Entity {
     name: string;
 
     static readonly dbKey = "lesson";
-    static schema: EntitySchema = {
+    static schema: Schema<Lesson> = {
         name: 'string'
     }
 
