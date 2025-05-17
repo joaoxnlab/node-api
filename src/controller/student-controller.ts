@@ -1,10 +1,8 @@
-import type { Request, Response } from "express";
+import type {Request, Response} from "express";
 
-import { type DTO, type Raw, Student } from "../datasource/entity/entities";
-import { HttpError, HttpErrorHandler } from "../infra/error/error-classes";
-import { StudentService } from "../service/student-service";
-
-export { getAll, get, post, put, remove };
+import {type DTO, type Raw, Student} from "../datasource/entity/entities";
+import {HttpError, HttpErrorHandler} from "../infra/error/error-classes";
+import {StudentService} from "../service/student-service";
 
 
 type ErrorHandled<T> = T | HttpErrorHandler;
@@ -24,56 +22,58 @@ type StudentListResponse = Response<HandledRawList>;
 type StudentResponse = Response<HandledRaw>;
 
 
-const service = new StudentService();
+export class StudentController {
+    constructor(private service: StudentService) {}
 
-function idFromPathParams(req: Request<{ id: string }>, _res: unknown) {
-	const id = Number(req.params.id);
+    idFromPathParams = (req: Request<{ id: string }>, _res: unknown) => {
+        const id = Number(req.params.id);
 
-	if (isNaN(id)) throw new HttpError(
-		400,
-		`'id' path parameter must be a number. Received: ${req.params.id}`
-	);
+        if (isNaN(id)) throw new HttpError(
+            400,
+            `'id' path parameter must be a number. Received: ${req.params.id}`
+        );
 
-	return id;
-}
+        return id;
+    }
 
-function assertValidDTO(body: Body): asserts body is DTO<Student> {
-	try {
-		Student.assertValidDTO(body);
-	} catch (err: unknown) {
-		if (err instanceof TypeError)
-			throw new HttpError(400, `Invalid Student DTO format: ${err.message}`, err);
-		throw err;
-	}
-}
+    assertValidDTO: (body: Body) => asserts body is DTO<Student> = (body: Body) => {
+        try {
+            Student.assertValidDTO(body);
+        } catch (err: unknown) {
+            if (err instanceof TypeError)
+                throw new HttpError(400, `Invalid Student DTO format: ${err.message}`, err);
+            throw err;
+        }
+    }
 
-async function getAll(_req: GetAllRequest, res: StudentListResponse) {
-	const students = await service.getAll();
-	res.status(200).json(students);
-}
+    getAll = async (_req: GetAllRequest, res: StudentListResponse) => {
+        const students = await this.service.getAll();
+        res.status(200).json(students);
+    }
 
-async function get(req: GetRequest, res: StudentResponse) {
-	const id = idFromPathParams(req, res);
-	res.status(200).json(await service.get(id));
-}
+    get = async (req: GetRequest, res: StudentResponse) => {
+        const id = this.idFromPathParams(req, res);
+        res.status(200).json(await this.service.get(id));
+    }
 
-async function post(req: PostRequest, res: StudentResponse) {
-	assertValidDTO(req.body);
+    post = async (req: PostRequest, res: StudentResponse) => {
+        this.assertValidDTO(req.body);
 
-	const newStudent = await service.add(req.body);
-	res.status(201).json(newStudent);
-}
+        const newStudent = await this.service.add(req.body);
+        res.status(201).json(newStudent);
+    }
 
-async function put(req: PutRequest, res: StudentResponse) {
-	const id = idFromPathParams(req, res);
-	assertValidDTO(req.body);
+    put = async (req: PutRequest, res: StudentResponse) => {
+        const id = this.idFromPathParams(req, res);
+        this.assertValidDTO(req.body);
 
-	const student = await service.put(id, req.body);
-	res.status(200).json(student);
-}
+        const student = await this.service.put(id, req.body);
+        res.status(200).json(student);
+    }
 
-async function remove(req: DeleteRequest, res: StudentResponse) {
-	const id = idFromPathParams(req, res);
-	const student = await service.remove(id);
-	res.status(200).json(student);
+    remove = async (req: DeleteRequest, res: StudentResponse) => {
+        const id = this.idFromPathParams(req, res);
+        await this.service.remove(id);
+        res.status(204).send();
+    }
 }
