@@ -1,4 +1,25 @@
-export { HttpError, HttpErrorHandler };
+export { HttpError, HttpErrorHandler, RawSQLiteError, SQLiteError };
+
+interface RawSQLiteError extends Error {
+	errno: number;
+	code: string;
+}
+
+class SQLiteError extends Error implements RawSQLiteError {
+	errno: number;
+	code: string;
+
+	constructor(rawError: RawSQLiteError) {
+		super(rawError.message);
+		this.errno = rawError.errno;
+		this.code = rawError.code;
+		this.name = 'SQLiteError';
+	}
+
+	static isRawSQLiteError(error: Error): error is RawSQLiteError {
+		return 'errno' in error && 'code' in error;
+	}
+}
 
 class HttpError extends Error {
 	readonly statusCode: number;
@@ -16,6 +37,17 @@ class HttpError extends Error {
 			return new HttpError(500,
 				`Cannot create an HttpError with a non-error status (Status: ${statusCode}).`
 				+` Cause: `+ this.message, this);
+	}
+
+	static fromSQLiteError(error: SQLiteError | RawSQLiteError): HttpError {
+		const sqliteError = error instanceof SQLiteError ? error : new SQLiteError(error);
+
+		switch (sqliteError.code) {
+			case 'SQLITE_CONSTRAINT':
+				return new HttpError(409, sqliteError.message, sqliteError);
+			default:
+				return new HttpError(500, 'Unknown SQLite Error: '+ sqliteError.message, sqliteError);
+		}
 	}
 
 	toString() {
