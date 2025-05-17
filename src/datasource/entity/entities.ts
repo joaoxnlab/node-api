@@ -142,19 +142,22 @@ abstract class Entity {
 class Student extends Entity {
     name: string;
     age: number;
+    email: string;
     phone: string | undefined;
 
     static readonly tableName = "student";
     static schema: Schema<Student> = {
         name: 'string',
         age: 'number',
+        email: 'string',
         phone: ['string', 'undefined']
     }
 
-    constructor(name: string, age: number, phone?: string, id?: number) {
+    constructor(name: string, age: number, email: string, phone?: string, id?: number) {
         super(id);
         this.name = name;
         this.age = age;
+        this.email = email;
         this.phone = phone;
     }
 
@@ -163,7 +166,7 @@ class Student extends Entity {
     }
 
     static fromObject(id: number, obj: DTO<Student>) {
-        return new Student(obj.name, obj.age, obj.phone, id);
+        return new Student(obj.name, obj.age, obj.email, obj.phone, id);
     }
 
     static assertValidDTO(obj: unknown): asserts obj is DTO<Student> {
