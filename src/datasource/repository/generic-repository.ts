@@ -1,7 +1,7 @@
 import {Database, DTO, Entity, Lesson, Raw, Schema, Student, Teacher} from "../entity/entities";
 import {requireDB} from "../database/database";
 import {Database as SQLDatabase} from "sqlite";
-import {HttpError} from "../../infra/error/error-classes";
+import {HttpError, SQLiteError} from "../../infra/error/error-classes";
 
 const schemas: { [key in keyof Database]: Schema<Entity> } = {
     student: Student.schema,
@@ -66,8 +66,8 @@ export class GenericRepository<T extends Entity> {
             await this.db.run(`UPDATE ${this.tableName} SET ${Object.keys(entity).map(key => `${key} = ?`).join(', ')} WHERE id = ?`,
                 Object.values(entity).concat(id));
         } catch (e) {
-            if (!(e instanceof Error)) throw new HttpError(500, `Error while replacing entity in database: ${e}`);
-            
+            if (!(e instanceof Error) || !SQLiteError.isRawSQLiteError(e)) throw new HttpError(500, `Error while replacing entity in database: ${e}`);
+
         }
 
         return {
