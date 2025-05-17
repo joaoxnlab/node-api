@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS student (
+    id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE ,
+    name TEXT NOT NULL ,
+    age INT NOT NULL ,
+    email TEXT NOT NULL UNIQUE ,
+    phone TEXT
+)
