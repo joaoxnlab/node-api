@@ -1,6 +1,6 @@
-import { DB_PATH, read, stepID, write, removeFromDB } from "../../utils/files";
+import {TableName} from "../repository/generic-repository";
 
-export { Raw, DTO, Database, DatabaseCounters, Entity, EntityConstructor, Student, Teacher, Lesson };
+export { Raw, DTO, Schema, Database, DatabaseCounters, Entity, EntityConstructor, Student, Teacher, Lesson };
 
 type Raw<T> =
     T extends Function ? never :
@@ -113,7 +113,16 @@ function assertPropertiesByValueAndPrimitiveType(obj: unknown, schema: EntitySch
 }
 
 abstract class Entity {
-    id?: number;
+    protected _id?: number;
+
+    get id() {
+        return this._id;
+    }
+
+    set id(value) {
+        if (this._id !== undefined) throw new Error("Variable 'id' is already set. Cannot set it again.");
+        this._id = value;
+    }
 
     protected constructor(id?: number) {
         this.id = id;
