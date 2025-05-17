@@ -14,9 +14,9 @@ type DTO<T> = Omit<Raw<T>, 'id'>;
 
 interface EntityConstructor<T> {
     new(...args: any[]): T;
-    fromObjectAsync(obj: DTO<T>): Promise<T>;
     fromObject(id: number, _obj: DTO<T>): T;
-    dbKey: keyof DatabaseCounters;
+    assertValidDTO(obj: unknown): asserts obj is T;
+    tableName: TableName;
 }
 
 type Database = {
@@ -121,28 +121,6 @@ abstract class Entity {
 
     abstract class(): EntityConstructor<Entity>;
 
-    async generateID() {
-        this.id = await stepID(this.class().dbKey);
-        return this;
-    }
-
-    async saveToDB() {
-        if (this.id !== 0 && !this.id) throw new Error("ID is required to save the Entity to the Database");
-        const db = await read(DB_PATH, JSON.parse) as Database;
-        (db[this.class().dbKey] as unknown as typeof this[]).push(this);
-
-        await write(DB_PATH, JSON.stringify(db));
-    }
-
-    async removeFromDB() {
-        if (this.id !== 0 && !this.id) throw new Error("ID is required to remove the Entity from the Database");
-        return removeFromDB(this.id, this.class().dbKey);
-    }
-
-    static fromObjectAsync(_object: Record<string, unknown>) {
-        throw new Error("Method not implemented! Use derived class")
-    }
-
     static fromObject(_id: number, _obj: Record<string, unknown>) {
         throw new Error("Method not implemented! Use derived class");
     }
@@ -157,7 +135,7 @@ class Student extends Entity {
     age: number;
     phone: string | undefined;
 
-    static readonly dbKey = "student";
+    static readonly tableName = "student";
     static schema: Schema<Student> = {
         name: 'string',
         age: 'number',
@@ -175,10 +153,6 @@ class Student extends Entity {
         return Student;
     }
 
-    static async fromObjectAsync(obj: DTO<Student>) {
-        return new Student(obj.name, obj.age, obj.phone).generateID();
-    }
-
     static fromObject(id: number, obj: DTO<Student>) {
         return new Student(obj.name, obj.age, obj.phone, id);
     }
@@ -192,7 +166,7 @@ class Student extends Entity {
 class Teacher extends Entity {
     name: string;
 
-    static readonly dbKey = "teacher";
+    static readonly tableName = "teacher";
     static schema: Schema<Teacher> = {
         name: 'string'
     }
@@ -204,10 +178,6 @@ class Teacher extends Entity {
 
     class() {
         return Teacher;
-    }
-
-    static async fromObjectAsync(obj: DTO<Teacher>) {
-        return new Teacher(obj.name).generateID();
     }
 
     static fromObject(id: number, obj: DTO<Teacher>) {
@@ -222,7 +192,7 @@ class Teacher extends Entity {
 class Lesson extends Entity {
     name: string;
 
-    static readonly dbKey = "lesson";
+    static readonly tableName = "lesson";
     static schema: Schema<Lesson> = {
         name: 'string'
     }
@@ -234,10 +204,6 @@ class Lesson extends Entity {
 
     class() {
         return Lesson;
-    }
-
-    static async fromObjectAsync(obj: DTO<Lesson>) {
-        return new Lesson(obj.name).generateID();
     }
 
     static fromObject(id: number, obj: DTO<Lesson>) {
