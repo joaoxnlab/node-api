@@ -62,13 +62,11 @@ export class GenericRepository<T extends Entity> {
     }
 
     async replace(id: number, entity: DTO<T>): Promise<Raw<T>> {
-        try {
-            await this.db.run(`UPDATE ${this.tableName} SET ${Object.keys(entity).map(key => `${key} = ?`).join(', ')} WHERE id = ?`,
-                Object.values(entity).concat(id));
-        } catch (e) {
-            if (!(e instanceof Error) || !SQLiteError.isRawSQLiteError(e)) throw new HttpError(500, `Error while replacing entity in database: ${e}`);
+        const dataAsString = Object.keys(entity).map(key => `${key} = ?`).join(', ');
+        const result = await this.db.run(`UPDATE ${this.tableName} SET ${dataAsString} WHERE id = ?`,
+            Object.values(entity).concat(id));
 
-        }
+        if (result.changes === 0) throw new HttpError(404, `No Entity found with ID '${id}'`);
 
         return {
             ...entity,
@@ -77,7 +75,8 @@ export class GenericRepository<T extends Entity> {
     }
 
     async delete(id: number): Promise<void> {
-        await this.db.run(`DELETE FROM ${this.tableName} WHERE id = ?`, [id]);
+        const result = await this.db.run(`DELETE FROM ${this.tableName} WHERE id = ?`, [id]);
+        if (result.changes === 0) throw new HttpError(404, `No Entity found with ID '${id}'`);
     }
 }
 
