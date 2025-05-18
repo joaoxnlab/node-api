@@ -54,11 +54,12 @@ export class GenericRepository<T extends Entity> {
             `Error while saving entity to database. Last ID is undefined`
         )
 
+        const response: DTO<T> & {id?: number} = {...entity}
+        delete response.id;
         return {
-            ...entity,
-            id: result.lastID
+            id: result.lastID,
+            ...response
         } as Raw<T>;
-
     }
 
     async replace(id: number, entity: DTO<T>): Promise<Raw<T>> {
@@ -68,9 +69,11 @@ export class GenericRepository<T extends Entity> {
 
         if (result.changes === 0) throw new HttpError(404, `No Entity found with ID '${id}'`);
 
+        const response: DTO<T> & {id?: number} = {...entity}
+        delete response.id;
         return {
-            ...entity,
-            id: id
+            id: id,
+            ...response
         } as Raw<T>;
     }
 
