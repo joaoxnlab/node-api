@@ -88,7 +88,8 @@ function assertPropertyType(obj: unknown, key: Key, typeOrUnion: PrimitiveString
  * @param schema - Use the schema to dictate how to check for the type of {@link obj}.
  * <br/> - Put the keys that the object has to check for those keys;
  * <br/> - Put the value as a {@link PrimitiveString} to check for a primitive type;
- * <br/> - Put the value as an Array of {@link OptionalSchemaType} to check if it has any of the included types ('nothing' means property does not exist);
+ * <br/> - Put the value as an Array of {@link OptionalSchemaType} to check if it has any of the included types
+ * ('nothing' means property does not exist);
  * <br/> - Put the value as an instance of Value to compare the exact values of `obj[key]` and `Value.data`.
  */
 function assertPropertiesByValueAndPrimitiveType(obj: unknown, schema: EntitySchema) {

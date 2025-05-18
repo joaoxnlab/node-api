@@ -1,14 +1,14 @@
-import express from 'express';
+import { Request, Response, NextFunction } from 'express';
 import * as logger from '@logger';
 import {HttpError, HttpErrorHandler, SQLiteError} from './error-classes';
 
-export function jsonParserHandler(err: unknown, _req: express.Request, _res: express.Response, _next: express.NextFunction) {
+export function jsonParserHandler(err: unknown, _req: Request, _res: Response, _next: NextFunction) {
 	if (err instanceof SyntaxError && 'body' in err)
 		throw new HttpError(400, `Malformed JSON in Request Body: ${err.message}`, err);
 	throw err;
 }
 
-function logError(req: express.Request, httpError: HttpError, err: unknown) {
+function logError(req: Request, httpError: HttpError, err: unknown) {
 	if (!(err instanceof Error)) {
 		logger.fatal(req, "A non-error landed on errorHandler.", httpError);
 		logger.warn(req, "Data landed on handler:", err);
@@ -22,7 +22,7 @@ function logError(req: express.Request, httpError: HttpError, err: unknown) {
 		logger.trace(req, "Error landed on handler:", err);
 }
 
-export function errorHandler(err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) {
+export function errorHandler(err: unknown, req: Request, res: Response, _next: NextFunction) {
 	const httpError = err instanceof HttpError
 		? err
 		: !(err instanceof Error)
