@@ -1,20 +1,19 @@
 import { Entity } from 'datasource/entity/entities';
-import { GenericController } from 'controller/generic-controller';
-import { Router } from 'express';
+import { GenericController } from "controller/generic-controller";
+import { Router } from "express";
 
+export class GenericRouter<T extends Entity> {
+    public readonly router = Router();
 
-let router: Router | undefined = undefined;
+    constructor(private controller: GenericController<T>) {
+        this.setRoutes();
+    }
 
-export function getRouter<T extends Entity>(controller?: GenericController<T>) {
-	if (router) return router;
-	if (!controller) throw new Error('No controller provided');
-
-	router = Router();
-	router.get('', controller.getAll);
-	router.get('/:id', controller.get);
-	router.post('', controller.post);
-	router.put('/:id', controller.put);
-	router.delete('/:id', controller.remove);
-
-	return router;
+    protected setRoutes() {
+        this.router.get('', this.controller.getAll);
+        this.router.get('/:id', this.controller.get);
+        this.router.post('', this.controller.post);
+        this.router.put('/:id', this.controller.put);
+        this.router.delete('/:id', this.controller.remove);
+    }
 }

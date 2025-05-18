@@ -1,5 +1,3 @@
-import { StudentController } from 'controller/student-controller';
-import { Student } from 'datasource/entity/entities';
 import express from 'express';
 import {HttpError} from 'infra/error/error-classes';
 
@@ -7,7 +5,7 @@ import {loggerLevel, LogLevel} from '@logger';
 import {jsonParser} from 'middleware/jsonParser';
 import {enableLoggedResponses, initRequestLogger} from 'middleware/logs';
 import {errorHandler, jsonParserHandler, listenUnhandledRejections} from 'infra/error/error-handler';
-import { getRouter } from 'router/generic-router';
+import { StudentRouter } from 'router/student-router';
 
 import * as DevKit from "./.dev/develop-kit";
 
@@ -29,7 +27,7 @@ const PORT = 8800;
 
     app.use(initRequestLogger);
     app.use(enableLoggedResponses);
-    app.use('/students', getRouter<Student>(await StudentController.new()));
+    app.use('/students', (await StudentRouter.new()).router);
     app.all('/{*path}', (req, _res, next) => {
         next(new HttpError(404, `Router with Path '${req.originalUrl}' Not Found`));
     });
