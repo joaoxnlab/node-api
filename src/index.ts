@@ -1,10 +1,10 @@
 import express from 'express';
-import {HttpError} from "./infra/error/error-classes";
+import {HttpError} from 'infra/error/error-classes';
 
-import {loggerLevel, LogLevel} from './utils/logger';
-import {jsonParser} from './middleware/jsonParser';
-import {enableLoggedResponses, initRequestLogger} from './middleware/logs';
-import {errorHandler, jsonParserHandler, listenUnhandledRejections} from './infra/error/error-handler';
+import {loggerLevel, LogLevel} from '@logger';
+import {jsonParser} from 'middleware/jsonParser';
+import {enableLoggedResponses, initRequestLogger} from 'middleware/logs';
+import {errorHandler, jsonParserHandler, listenUnhandledRejections} from 'infra/error/error-handler';
 
 import * as DevKit from "./.dev/develop-kit";
 import {requireRouter as requireStudentRouter} from "./router/student-router";

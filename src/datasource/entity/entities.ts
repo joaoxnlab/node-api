@@ -1,6 +1,6 @@
-import {TableName} from "../repository/generic-repository";
+import {TableName} from "datasource/repository/generic-repository";
 
-export { Raw, DTO, Schema, Database, DatabaseCounters, Entity, EntityConstructor, Student, Teacher, Lesson };
+export { Raw, DTO, Schema, Entity, EntityConstructor, Student, Teacher, Lesson };
 
 type Raw<T> =
     T extends Function ? never :
@@ -17,18 +17,6 @@ interface EntityConstructor<T> {
     fromObject(id: number, _obj: DTO<T>): T;
     assertValidDTO(obj: unknown): asserts obj is T;
     tableName: TableName;
-}
-
-type Database = {
-    student: Student[],
-    teacher: Teacher[],
-    lesson: Lesson[]
-}
-
-type DatabaseCounters<T = number> = {
-    student: T,
-    teacher: T,
-    lesson: T
 }
 
 type PrimitiveString = 'undefined' | 'object' | 'boolean' | 'number' | 'bigint' | 'string' | 'symbol' | 'function';

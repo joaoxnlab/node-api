@@ -1,7 +1,6 @@
-import {read} from "../utils/files";
-import { Database, EntityConstructor, type DTO, type Entity, Raw } from "../datasource/entity/entities";
-import { HttpError } from "../infra/error/error-classes";
-import {GenericRepository} from "../datasource/repository/generic-repository";
+import { EntityConstructor, type DTO, type Entity, Raw } from "datasource/entity/entities";
+import { HttpError } from "infra/error/error-classes";
+import {GenericRepository} from "datasource/repository/generic-repository";
 
 export class GenericService<T extends Entity> {
 	constructor(private EntityConstructor: EntityConstructor<T>, private Repository: GenericRepository<T>) {}

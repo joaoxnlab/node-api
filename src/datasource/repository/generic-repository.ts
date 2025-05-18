@@ -1,25 +1,25 @@
-import {Database, DTO, Entity, Lesson, Raw, Schema, Student, Teacher} from "../entity/entities";
-import {requireDB} from "../database/database";
-import {Database as SQLDatabase} from "sqlite";
-import {HttpError, SQLiteError} from "../../infra/error/error-classes";
+import { DTO, Entity, Lesson, Raw, Schema, Student, Teacher} from "datasource/entity/entities";
+import { requireDB } from "datasource/database/database";
+import { Database } from "sqlite";
+import { HttpError, SQLiteError } from 'infra/error/error-classes';
 
-const schemas: { [key in keyof Database]: Schema<Entity> } = {
+export type TableName = "student" | "teacher" | "lesson";
+
+const schemas = {
     student: Student.schema,
     teacher: Teacher.schema,
     lesson: Lesson.schema,
 }
 
-export type TableName = "student" | "teacher" | "lesson";
-
 export class GenericRepository<T extends Entity> {
     readonly schema: Schema<Entity>;
 
-    constructor(private readonly db: SQLDatabase, private readonly tableName: keyof Database) {
+    constructor(private readonly db: Database, private readonly tableName: TableName) {
         this.db = db;
         this.schema = schemas[tableName];
     }
 
-    static async new<T extends Entity>(tableName: keyof Database) {
+    static async new<T extends Entity>(tableName: TableName) {
         const db = await requireDB();
         return new GenericRepository<T>(db, tableName);
     }

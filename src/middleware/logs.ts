@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
-import { HttpErrorHandler } from '../infra/error/error-classes';
-import * as logger from '../utils/logger';
+import { HttpErrorHandler } from 'infra/error/error-classes';
+import * as logger from '@logger';
 
 export function initRequestLogger(req: Request, _res: Response, next: NextFunction) {
 	logger.info(req, 'Initializing router. Body type:', typeof req.body);

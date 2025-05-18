@@ -1,5 +1,5 @@
 import express from 'express';
-import * as logger from '../../utils/logger';
+import * as logger from '@logger';
 import {HttpError, HttpErrorHandler, SQLiteError} from './error-classes';
 
 export function jsonParserHandler(err: unknown, _req: express.Request, _res: express.Response, _next: express.NextFunction) {

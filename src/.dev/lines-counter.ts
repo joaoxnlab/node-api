@@ -1,5 +1,5 @@
 import fs from "fs";
-import { log, LogLevel } from "../utils/logger";
+import { log, LogLevel } from '@logger';
 import * as path from "node:path";
 
 const sourcePath = path.join(__dirname, '..');
