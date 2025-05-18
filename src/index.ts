@@ -1,3 +1,5 @@
+import { StudentController } from 'controller/student-controller';
+import { Student } from 'datasource/entity/entities';
 import express from 'express';
 import {HttpError} from 'infra/error/error-classes';
 
@@ -5,9 +7,9 @@ import {loggerLevel, LogLevel} from '@logger';
 import {jsonParser} from 'middleware/jsonParser';
 import {enableLoggedResponses, initRequestLogger} from 'middleware/logs';
 import {errorHandler, jsonParserHandler, listenUnhandledRejections} from 'infra/error/error-handler';
+import { getRouter } from 'router/generic-router';
 
 import * as DevKit from "./.dev/develop-kit";
-import {requireRouter as requireStudentRouter} from "./router/student-router";
 
 // Set Level before executing other dependencies that might use the logger
 loggerLevel(LogLevel.INFO);
@@ -27,7 +29,7 @@ const PORT = 8800;
 
     app.use(initRequestLogger);
     app.use(enableLoggedResponses);
-    app.use('/students', await requireStudentRouter());
+    app.use('/students', getRouter<Student>(await StudentController.new()));
     app.all('/{*path}', (req, _res, next) => {
         next(new HttpError(404, `Router with Path '${req.originalUrl}' Not Found`));
     });
@@ -38,4 +40,4 @@ const PORT = 8800;
         console.log(`Listening on port ${PORT}`);
     });
 
-})().then();
+})();
