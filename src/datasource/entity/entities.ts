@@ -1,6 +1,6 @@
-import { DB_PATH, read, stepID, write, removeFromDB } from "../../utils/files";
+import {TableName} from "datasource/repository/generic-repository";
 
-export { Raw, DTO, Database, DatabaseCounters, Entity, EntityConstructor, Student, Teacher, Lesson };
+export { Raw, DTO, Schema, Entity, EntityConstructor, Student, Teacher, Lesson };
 
 type Raw<T> =
     T extends Function ? never :
@@ -14,21 +14,9 @@ type DTO<T> = Omit<Raw<T>, 'id'>;
 
 interface EntityConstructor<T> {
     new(...args: any[]): T;
-    fromObjectAsync(obj: DTO<T>): Promise<T>;
     fromObject(id: number, _obj: DTO<T>): T;
-    dbKey: keyof DatabaseCounters;
-}
-
-type Database = {
-    student: Student[],
-    teacher: Teacher[],
-    lesson: Lesson[]
-}
-
-type DatabaseCounters<T = number> = {
-    student: T,
-    teacher: T,
-    lesson: T
+    assertValidDTO(obj: unknown): asserts obj is T;
+    tableName: TableName;
 }
 
 type PrimitiveString = 'undefined' | 'object' | 'boolean' | 'number' | 'bigint' | 'string' | 'symbol' | 'function';
@@ -100,7 +88,8 @@ function assertPropertyType(obj: unknown, key: Key, typeOrUnion: PrimitiveString
  * @param schema - Use the schema to dictate how to check for the type of {@link obj}.
  * <br/> - Put the keys that the object has to check for those keys;
  * <br/> - Put the value as a {@link PrimitiveString} to check for a primitive type;
- * <br/> - Put the value as an Array of {@link OptionalSchemaType} to check if it has any of the included types ('nothing' means property does not exist);
+ * <br/> - Put the value as an Array of {@link OptionalSchemaType} to check if it has any of the included types
+ * ('nothing' means property does not exist);
  * <br/> - Put the value as an instance of Value to compare the exact values of `obj[key]` and `Value.data`.
  */
 function assertPropertiesByValueAndPrimitiveType(obj: unknown, schema: EntitySchema) {
@@ -113,35 +102,22 @@ function assertPropertiesByValueAndPrimitiveType(obj: unknown, schema: EntitySch
 }
 
 abstract class Entity {
-    id?: number;
+    protected _id?: number;
+
+    get id() {
+        return this._id;
+    }
+
+    set id(value) {
+        if (this._id !== undefined) throw new Error("Variable 'id' is already set. Cannot set it again.");
+        this._id = value;
+    }
 
     protected constructor(id?: number) {
         this.id = id;
     }
 
     abstract class(): EntityConstructor<Entity>;
-
-    async generateID() {
-        this.id = await stepID(this.class().dbKey);
-        return this;
-    }
-
-    async saveToDB() {
-        if (this.id !== 0 && !this.id) throw new Error("ID is required to save the Entity to the Database");
-        const db = await read(DB_PATH, JSON.parse) as Database;
-        (db[this.class().dbKey] as unknown as typeof this[]).push(this);
-
-        await write(DB_PATH, JSON.stringify(db));
-    }
-
-    async removeFromDB() {
-        if (this.id !== 0 && !this.id) throw new Error("ID is required to remove the Entity from the Database");
-        return removeFromDB(this.id, this.class().dbKey);
-    }
-
-    static fromObjectAsync(_object: Record<string, unknown>) {
-        throw new Error("Method not implemented! Use derived class")
-    }
 
     static fromObject(_id: number, _obj: Record<string, unknown>) {
         throw new Error("Method not implemented! Use derived class");
@@ -155,19 +131,22 @@ abstract class Entity {
 class Student extends Entity {
     name: string;
     age: number;
+    email: string;
     phone: string | undefined;
 
-    static readonly dbKey = "student";
+    static readonly tableName = "student";
     static schema: Schema<Student> = {
         name: 'string',
         age: 'number',
+        email: 'string',
         phone: ['string', 'undefined']
     }
 
-    constructor(name: string, age: number, phone?: string, id?: number) {
+    constructor(name: string, age: number, email: string, phone?: string, id?: number) {
         super(id);
         this.name = name;
         this.age = age;
+        this.email = email;
         this.phone = phone;
     }
 
@@ -175,12 +154,8 @@ class Student extends Entity {
         return Student;
     }
 
-    static async fromObjectAsync(obj: DTO<Student>) {
-        return new Student(obj.name, obj.age, obj.phone).generateID();
-    }
-
     static fromObject(id: number, obj: DTO<Student>) {
-        return new Student(obj.name, obj.age, obj.phone, id);
+        return new Student(obj.name, obj.age, obj.email, obj.phone, id);
     }
 
     static assertValidDTO(obj: unknown): asserts obj is DTO<Student> {
@@ -192,7 +167,7 @@ class Student extends Entity {
 class Teacher extends Entity {
     name: string;
 
-    static readonly dbKey = "teacher";
+    static readonly tableName = "teacher";
     static schema: Schema<Teacher> = {
         name: 'string'
     }
@@ -204,10 +179,6 @@ class Teacher extends Entity {
 
     class() {
         return Teacher;
-    }
-
-    static async fromObjectAsync(obj: DTO<Teacher>) {
-        return new Teacher(obj.name).generateID();
     }
 
     static fromObject(id: number, obj: DTO<Teacher>) {
@@ -222,7 +193,7 @@ class Teacher extends Entity {
 class Lesson extends Entity {
     name: string;
 
-    static readonly dbKey = "lesson";
+    static readonly tableName = "lesson";
     static schema: Schema<Lesson> = {
         name: 'string'
     }
@@ -234,10 +205,6 @@ class Lesson extends Entity {
 
     class() {
         return Lesson;
-    }
-
-    static async fromObjectAsync(obj: DTO<Lesson>) {
-        return new Lesson(obj.name).generateID();
     }
 
     static fromObject(id: number, obj: DTO<Lesson>) {

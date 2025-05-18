@@ -1,5 +1,5 @@
 import fs from "fs";
-import { log, LogLevel } from "../utils/logger";
+import { log, LogLevel } from '@logger';
 import * as path from "node:path";
 
 const sourcePath = path.join(__dirname, '..');
@@ -9,13 +9,16 @@ const files = [
 	"utils/logger.ts",
 	"service/generic-service.ts",
 	"service/student-service.ts",
-	"router/student-router.ts",
+	"router/generic-router.ts",
 	"middleware/jsonParser.ts",
 	"middleware/logs.ts",
 	"infra/error/error-classes.ts",
 	"infra/error/error-handler.ts",
+	"datasource/repository/generic-repository.ts",
 	"datasource/entity/entities.ts",
-	"controller/student-controller.ts"
+	"datasource/database/database.ts",
+	"controller/student-controller.ts",
+	"controller/generic-controller.ts",
 ];
 
 type LineStatusData = {

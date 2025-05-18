@@ -1,10 +1,10 @@
-import express from "express";
-import * as Student from "../controller/student-controller";
+import { StudentController } from 'controller/student-controller';
+import type { Student } from 'datasource/entity/entities';
+import { GenericRouter } from 'router/generic-router';
 
-export const studentRouter = express.Router();
 
-studentRouter.get('', Student.getAll);
-studentRouter.get('/:id', Student.get);
-studentRouter.post('', Student.post);
-studentRouter.put('/:id', Student.put);
-studentRouter.delete('/:id', Student.remove);
+export class StudentRouter extends GenericRouter<Student> {
+	static async new() {
+		return new StudentRouter(await StudentController.new());
+	}
+}

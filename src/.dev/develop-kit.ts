@@ -1,4 +1,4 @@
-import { log, LogLevel } from "../utils/logger";
+import { log, LogLevel } from '@logger';
 import { logLinesStatus } from "./lines-counter";
 
 export { ExecutionMode, setExecutionMode, projectStatus };
