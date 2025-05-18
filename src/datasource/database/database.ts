@@ -1,7 +1,7 @@
 import sqlite3 from 'sqlite3';
 import {Database, open} from 'sqlite';
 import * as path from "node:path";
-import {read} from "../../utils/files";
+import {read} from 'utils/files';
 
 let db: Database | undefined = undefined;
 
