@@ -1,8 +1,15 @@
-export {HttpError, HttpErrorHandler, RawSQLiteError, SQLiteError};
+export {HttpError, HttpErrorHandler, RawSQLiteError, SQLiteError, InvalidFormatError};
 
 interface RawSQLiteError extends Error {
     errno: number;
     code: string;
+}
+
+class InvalidFormatError extends Error {
+    constructor(message?: string) {
+        super(message);
+        this.name = 'InvalidFormatError';
+    }
 }
 
 class SQLiteError extends Error implements RawSQLiteError {

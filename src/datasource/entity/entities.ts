@@ -1,4 +1,5 @@
 import {TableName} from "datasource/repository/generic-repository";
+import { HttpError, InvalidFormatError } from 'infra/error/error-classes';
 
 export { Raw, DTO, Schema, Entity, EntityConstructor, Student, Teacher, Lesson };
 
@@ -43,15 +44,15 @@ function assertPropertyValue(obj: unknown, key: Key, value: unknown) {
         throw new Error("Value cannot be of type OBJECT because object comparisons is always false.");
 
     if (typeof obj !== 'object' || obj === null)
-        throw new TypeError("Value is not of type OBJECT or is equal to null");
+        throw new InvalidFormatError("Value is not of type OBJECT or is equal to null");
 
-    if (!(key in obj)) throw new TypeError(
+    if (!(key in obj)) throw new InvalidFormatError(
         `Missing property '${key}' of type '${typeof value}' and value '${value}'`
     );
 
     const valueFromObj = (obj as {[key: Key]: unknown})[key];
 
-    if (valueFromObj !== value) throw new TypeError(
+    if (valueFromObj !== value) throw new InvalidFormatError(
         `Expected property '${key}' with type '${typeof value}' and value '${value}'.`
         +` Received with type: '${typeof valueFromObj}' and value '${valueFromObj}'`
     );
@@ -63,11 +64,11 @@ function assertPropertyType(obj: unknown, key: Key, typeOrUnion: PrimitiveString
     else typeVisualization = typeOrUnion.join(' | ');
 
     if (typeof obj !== 'object' || obj === null)
-        throw new TypeError("Value is not of type OBJECT or is equal to null");
+        throw new InvalidFormatError("Value is not of type OBJECT or is equal to null");
 
     if (!(key in obj)) {
         if (Array.isArray(typeOrUnion) && typeOrUnion.includes('nothing')) return;
-        throw new TypeError(`Missing property '${key}' of type '${typeVisualization}'`);
+        throw new InvalidFormatError(`Missing property '${key}' of type '${typeVisualization}'`);
     }
 
     const objType = typeof (obj as {[key: Key]: unknown})[key];
@@ -160,6 +161,18 @@ class Student extends Entity {
 
     static assertValidDTO(obj: unknown): asserts obj is DTO<Student> {
         assertPropertiesByValueAndPrimitiveType(obj, Student.schema);
+        const validObject = obj as DTO<Student>;
+
+        if (validObject.age < 0 || validObject.age > 150)
+            throw new InvalidFormatError("Invalid age. Must be between 0 and 150");
+
+        if (!validObject.email.match(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/))
+            throw new InvalidFormatError("Invalid email format. Must be in the format: 'name@email.domain'" +
+                " and must only contain letters, numbers, dots, underscores and dashes.");
+
+        if (validObject.phone !== undefined && !validObject.phone.match(/^[0-9]{12}$/))
+            throw new InvalidFormatError("Invalid phone number format." +
+                " Must be in the format: 'DDD987654321' where DDD is the phone's DDD as 3 numbers");
     }
 }
 
