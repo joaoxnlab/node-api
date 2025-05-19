@@ -8,6 +8,6 @@ export class StudentService extends GenericService<Student> {
     }
 
     static async new() {
-        return new StudentService(await GenericRepository.new<Student>('student'));
+        return new StudentService(await GenericRepository.new<Student>(Student.tableName));
     }
 }

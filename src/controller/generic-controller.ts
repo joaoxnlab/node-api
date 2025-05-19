@@ -2,7 +2,7 @@ import type {Request, Response} from "express";
 import type { GenericService } from 'service/generic-service';
 
 import { type DTO, Entity, type EntityConstructor, type Raw } from 'datasource/entity/entities';
-import {HttpError, HttpErrorHandler} from 'infra/error/error-classes';
+import { HttpError, HttpErrorHandler, InvalidFormatError } from 'infra/error/error-classes';
 
 
 type ErrorHandled<T> = T | HttpErrorHandler;
@@ -10,20 +10,21 @@ type ErrorHandled<T> = T | HttpErrorHandler;
 type HandledRawList<T> = ErrorHandled<Raw<T>[]>;
 type HandledRaw<T> = ErrorHandled<Raw<T>>
 
-type Body = Record<string, unknown> | undefined;
-
 type GetAllRequest<T> = Request<{}, HandledRawList<T>>;
+
 type GetRequest<T> = Request<{ id: string }, HandledRaw<T>>;
 type PostRequest<T> = Request<{}, HandledRaw<T>, Body>;
 type PutRequest<T> = Request<{ id: string }, HandledRaw<T>, Body>;
 type DeleteRequest<T> = Request<{ id: string }, HandledRaw<T>>;
-
 type ControllerListResponse<T> = Response<HandledRawList<T>>;
+
 type ControllerResponse<T> = Response<HandledRaw<T>>;
+
+export type Body = Record<string, unknown> | undefined;
 
 
 export class GenericController<T extends Entity> {
-    constructor(private EntityConstructor: EntityConstructor<T>, private service: GenericService<T>) {}
+    constructor(protected EntityConstructor: EntityConstructor<T>, protected service: GenericService<T>) {}
 
     idFromPathParams = (req: Request<{ id: string }>, _res: unknown) => {
         const id = Number(req.params.id);
@@ -40,7 +41,7 @@ export class GenericController<T extends Entity> {
         try {
             this.EntityConstructor.assertValidDTO(body);
         } catch (err: unknown) {
-            if (err instanceof TypeError)
+            if (err instanceof InvalidFormatError)
                 throw new HttpError(400,
                     `Invalid '${this.EntityConstructor.tableName}' DTO format: ${err.message}`, err);
             throw err;

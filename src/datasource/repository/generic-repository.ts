@@ -1,7 +1,7 @@
 import { DTO, Entity, Lesson, Raw, Schema, Student, Teacher} from "datasource/entity/entities";
 import { requireDB } from "datasource/database/database";
 import { Database } from "sqlite";
-import { HttpError, SQLiteError } from 'infra/error/error-classes';
+import { HttpError } from 'infra/error/error-classes';
 
 export type TableName = "student" | "teacher" | "lesson";
 
