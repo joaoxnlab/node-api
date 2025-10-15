@@ -5,7 +5,7 @@ import { Router } from "express";
 export class GenericRouter<T extends Entity> {
     public readonly router = Router();
 
-    constructor(private controller: GenericController<T>) {
+    constructor(protected controller: GenericController<T>) {
         this.setRoutes();
     }
 
