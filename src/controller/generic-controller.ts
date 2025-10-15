@@ -23,7 +23,7 @@ type ControllerResponse<T> = Response<HandledRaw<T>>;
 
 
 export class GenericController<T extends Entity> {
-    constructor(private EntityConstructor: EntityConstructor<T>, private service: GenericService<T>) {}
+    constructor(private EntityConstructor: EntityConstructor<T>, protected service: GenericService<T>) {}
 
     idFromPathParams = (req: Request<{ id: string }>, _res: unknown) => {
         const id = Number(req.params.id);
