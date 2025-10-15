@@ -18,9 +18,9 @@ function loggerLevel(level: LogLevel) {
 	LOGGER_LEVEL = level;
 }
 
-function log(level: LogLevel, method: string, originalUrl: string, logger: (...data: any[])=>void, ...data: any[]) {
+function log(level: LogLevel, method: string, originalUrl: string | null, logger: (...data: any[])=>void, ...data: any[]) {
 	if (LOGGER_LEVEL < level) return;
-	logger(LogLevel[level], `- ${method} ${originalUrl} ->`, ...data);
+	logger(LogLevel[level], `- ${method}${!originalUrl?"":" "+originalUrl} ->`, ...data);
 }
 
 function fatal(req: Request, ...data: any[]) {
