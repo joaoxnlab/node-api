@@ -3,7 +3,7 @@ import { HttpError } from "infra/error/error-classes";
 import {GenericRepository} from "datasource/repository/generic-repository";
 
 export class GenericService<T extends Entity> {
-	constructor(private EntityConstructor: EntityConstructor<T>, private Repository: GenericRepository<T>) {}
+	constructor(private EntityConstructor: EntityConstructor<T>, protected repository: GenericRepository<T>) {}
 
 	async getAll(): Promise<Raw<T>[]> {
 		return await this.Repository.getAll();
